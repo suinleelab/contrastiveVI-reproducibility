@@ -13,6 +13,8 @@ DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
 DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-fixed-background-size/"
 DEFAULT_SEEDS = [123, 42, 789, 46, 999]
 
+NORMALIZATION_LIST = ["tc", "tmm", "scran", "basics"]
+
 DATASET_SPLIT_LOOKUP = {
     "zheng_2017": {
         "split_key": "condition",

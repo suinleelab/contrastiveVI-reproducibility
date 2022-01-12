@@ -8,10 +8,9 @@ import gzip
 import os
 
 import pandas as pd
-import scanpy as sc
 from anndata import AnnData
 
-from contrastive_vi.data.utils import download_binary_file
+from contrastive_vi.data.utils import download_binary_file, preprocess_workflow
 
 
 def download_haber_2017(output_path: str) -> None:
@@ -60,7 +59,9 @@ def read_haber_2017(file_directory: str) -> pd.DataFrame:
     return df
 
 
-def preprocess_haber_2017(download_path: str, n_top_genes: int) -> AnnData:
+def preprocess_haber_2017(
+    download_path: str, n_top_genes: int, normalization_method: str = "tc"
+) -> AnnData:
     """
     Preprocess expression data from Haber et al. 2017.
 
@@ -68,14 +69,16 @@ def preprocess_haber_2017(download_path: str, n_top_genes: int) -> AnnData:
     ----
         download_path: Path containing the downloaded Haber et al. 2017 data file.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Normalization method. Available options are "tc" (total
+        count), "tmm" (trimmed-mean-of-M-values), "scran" (scran deconvolution), and
+        "basics" (BASiCS).
 
     Returns
     -------
         An AnnData object containing single-cell expression data. The layer
-        "count" contains the count data for the most variable genes. The X
-        variable contains the total-count-normalized and log-transformed data
-        for the most variable genes (a copy with all the genes is stored in
-        .raw).
+        "count" contains the count data for the most variable genes. The .X
+        variable contains the normalized and log-transformed data for the most variable
+        genes. A copy of data with all genes is stored in .raw.
     """
 
     df = read_haber_2017(download_path)
@@ -104,12 +107,7 @@ def preprocess_haber_2017(download_path: str, n_top_genes: int) -> AnnData:
 
     adata = AnnData(X=df.values, obs=metadata_df)
     adata = adata[adata.obs["condition"] != "Hpoly.Day3"]
-    adata.layers["count"] = adata.X.copy()
-    sc.pp.normalize_total(adata)
-    sc.pp.log1p(adata)
-    adata.raw = adata
-    sc.pp.highly_variable_genes(
-        adata, flavor="seurat_v3", n_top_genes=n_top_genes, layer="count", subset=True
+    adata = preprocess_workflow(
+        adata=adata, n_top_genes=n_top_genes, normalization_method=normalization_method
     )
-    adata = adata[adata.layers["count"].sum(1) != 0]  # Remove cells with all zeros.
     return adata
