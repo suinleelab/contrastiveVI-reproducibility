@@ -49,15 +49,28 @@ parser.add_argument(
     "--latent_size",
     type=int,
     default=10,
-    help="Size of the model's latent space. For contrastive models, this is the size "
-    "of the salient latent space. For non-contrastive, this is the size of the "
-    "single latent space.",
+    help=(
+        "Size of the model's latent space. For contrastive models, this is the size "
+        "of the salient latent space. For non-contrastive models, this is the size "
+        "of the single latent space."
+    ),
 )
 parser.add_argument(
     "--n_genes",
     type=int,
     default=2000,
     help="Number of highly variable genes in dataset.",
+)
+parser.add_argument(
+    "--normalization_method",
+    type=str,
+    choices=constants.NORMALIZATION_LIST,
+    default="tc",
+    dest="normalization_method",
+    help=(
+        "Normalization method used for scaling cell-specific library sizes. "
+        f"Only applicable to {constants.METHODS_WITHOUT_LIB_NORMALIZATION}"
+    ),
 )
 parser.add_argument(
     "--gpu_num",
@@ -78,14 +91,23 @@ print(f"Running {sys.argv[0]} with arguments")
 for arg in vars(args):
     print(f"\t{arg}={getattr(args, arg)}")
 
-adata = sc.read_h5ad(
-    os.path.join(
-        constants.DEFAULT_DATA_PATH,
-        args.dataset,
-        "preprocessed",
-        f"adata_top_{args.n_genes}_genes.h5ad",
-    )
+if args.method in constants.METHODS_WITHOUT_LIB_NORMALIZATION:
+    preprocessed_file_suffix = f"_{args.normalization_method}"
+    output_suffix = preprocessed_file_suffix
+else:
+    preprocessed_file_suffix = "_tc"
+    # The actual file choice doesn't matter since adata count layers are all the same.
+
+    output_suffix = ""
+
+adata_file = os.path.join(
+    constants.DEFAULT_DATA_PATH,
+    args.dataset,
+    "preprocessed",
+    f"adata_top_{args.n_genes}_genes{preprocessed_file_suffix}.h5ad",
 )
+adata = sc.read_h5ad(adata_file)
+print(f"Data read from {adata_file}")
 
 dataset_split_lookup = constants.DATASET_SPLIT_LOOKUP
 if args.dataset in dataset_split_lookup.keys():
@@ -266,7 +288,7 @@ if args.method in torch_models:
         results_dir = os.path.join(
             constants.DEFAULT_RESULTS_PATH,
             args.dataset,
-            args.method,
+            f"{args.method}{output_suffix}",
             f"latent_{args.latent_size}",
             str(seed),
         )
@@ -368,7 +390,7 @@ elif args.method in tf_models:
             results_dir = os.path.join(
                 constants.DEFAULT_RESULTS_PATH,
                 args.dataset,
-                args.method,
+                f"{args.method}{output_suffix}",
                 f"latent_{args.latent_size}",
                 str(seed),
             )
@@ -406,7 +428,7 @@ elif args.method == "PCPCA":
     results_dir = os.path.join(
         constants.DEFAULT_RESULTS_PATH,
         args.dataset,
-        args.method,
+        f"{args.method}{output_suffix}",
         f"latent_{args.latent_size}",
     )
 
@@ -434,7 +456,7 @@ elif args.method == "cPCA":
     results_dir = os.path.join(
         constants.DEFAULT_RESULTS_PATH,
         args.dataset,
-        args.method,
+        f"{args.method}{output_suffix}",
         f"latent_{args.latent_size}",
     )
     os.makedirs(results_dir, exist_ok=True)

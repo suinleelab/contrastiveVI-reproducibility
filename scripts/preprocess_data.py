@@ -220,7 +220,7 @@ def main():
     parser.add_argument(
         "--normalization-method",
         type=str,
-        choices=["tc", "tmm", "scran", "basics"],
+        choices=constants.NORMALIZATION_LIST,
         default="tc",
         dest="normalization_method",
         help="Normalization method for scaling cell-specific library sizes",

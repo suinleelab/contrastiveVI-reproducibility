@@ -10,10 +10,11 @@ DATASET_LIST = [
     "grubman_2019",
 ]
 DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
-DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-fixed-background-size/"
+DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
 DEFAULT_SEEDS = [123, 42, 789, 46, 999]
 
 NORMALIZATION_LIST = ["tc", "tmm", "scran", "basics"]
+METHODS_WITHOUT_LIB_NORMALIZATION = ["PCPCA", "cPCA", "cVAE"]
 
 DATASET_SPLIT_LOOKUP = {
     "zheng_2017": {
