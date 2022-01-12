@@ -36,116 +36,158 @@ from contrastive_vi.data.datasets.zheng_2017 import (
 from contrastive_vi.data.utils import save_preprocessed_adata
 
 
-def download_and_preprocess_zheng_2017(output_path: str, n_top_genes: int) -> None:
-    """Download, preprocess, and save data from Zheng et al. 2017.
+def download_and_preprocess_zheng_2017(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Zheng et al. 2017.
 
     Args:
+    ----
         output_path: Path to save output files.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
 
-    Returns:
+    Returns
+    -------
         None. Raw Data are saved in output_path. Preprocessed data are saved
         in a sub-directory called "preprocessed" in output_path.
     """
     download_zheng_2017(output_path)
     adata = preprocess_zheng_2017(output_path, n_top_genes)
-    save_preprocessed_adata(adata, output_path)
+    save_preprocessed_adata(adata, output_path, normalization_method)
 
 
-def download_and_preprocess_haber_2017(output_path: str, n_top_genes: int) -> None:
-    """Download, preprocess, and save data from Haber et al. 2017.
+def download_and_preprocess_haber_2017(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Haber et al. 2017.
 
     Args:
+    ----
         output_path: Path to save output files.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
 
-    Returns:
+    Returns
+    -------
         None. Raw Data are saved in output_path. Preprocessed data are saved
         in a sub-directory called "preprocessed" in output_path.
     """
     download_haber_2017(output_path)
     adata = preprocess_haber_2017(output_path, n_top_genes)
-    save_preprocessed_adata(adata, output_path)
+    save_preprocessed_adata(adata, output_path, normalization_method)
 
 
-def download_and_preprocess_blish_2020(output_path: str, n_top_genes: int) -> None:
-    """Download, preprocess, and save data from Blish et al. 2020.
+def download_and_preprocess_blish_2020(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Blish et al. 2020.
 
     Args:
+    ----
         output_path: Path to save output files.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
 
-    Returns:
+    Returns
+    -------
         None. Raw Data are saved in output_path. Preprocessed data are saved
         in a sub-directory called "preprocessed" in output_path.
     """
     download_blish_2020(output_path)
     adata = preprocess_blish_2020(output_path, n_top_genes)
-    save_preprocessed_adata(adata, output_path)
+    save_preprocessed_adata(adata, output_path, normalization_method)
 
 
-def download_and_preprocess_xiang_2020(output_path: str, n_top_genes: int) -> None:
-    """Download, preprocess, and save data from Xiang et al. 2020.
+def download_and_preprocess_xiang_2020(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Xiang et al. 2020.
 
     Args:
+    ----
         output_path: Path to save output files.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
 
-    Returns:
+    Returns
+    -------
         None. Raw Data are saved in output_path. Preprocessed data are saved
         in a sub-directory called "preprocessed" in output_path.
     """
     download_xiang_2020(output_path)
     adata = preprocess_xiang_2020(output_path, n_top_genes)
-    save_preprocessed_adata(adata, output_path)
+    save_preprocessed_adata(adata, output_path, normalization_method)
 
 
-def download_and_preprocess_fasolino_2021(output_path: str, n_top_genes: int) -> None:
-    """Download, preprocess, and save data from Xiang et al. 2020.
+def download_and_preprocess_fasolino_2021(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Xiang et al. 2020.
 
     Args:
+    ----
         output_path: Path to save output files.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
 
-    Returns:
+    Returns
+    -------
         None. Raw Data are saved in output_path. Preprocessed data are saved
         in a sub-directory called "preprocessed" in output_path.
     """
     download_fasolino_2021(output_path)
     adata = preprocess_fasolino_2021(output_path, n_top_genes)
-    save_preprocessed_adata(adata, output_path)
+    save_preprocessed_adata(adata, output_path, normalization_method)
 
 
-def download_and_preprocess_mcfarland_2020(output_path: str, n_top_genes: int) -> None:
-    """Download, preprocess, and save data from Mcfarland et al. 2020.
+def download_and_preprocess_mcfarland_2020(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Mcfarland et al. 2020.
 
     Args:
+    ----
         output_path: Path to save output files.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
 
-    Returns:
+    Returns
+    -------
         None. Raw Data are saved in output_path. Preprocessed data are saved
         in a sub-directory called "preprocessed" in output_path.
     """
     download_mcfarland_2020(output_path)
     adata = preprocess_mcfarland_2020(output_path, n_top_genes)
-    save_preprocessed_adata(adata, output_path)
+    save_preprocessed_adata(adata, output_path, normalization_method)
 
 
-def download_and_preprocess_grubman_2019(output_path: str, n_top_genes: int) -> None:
-    """Download, preprocess, and save data from Grubman et al. 2019.
+def download_and_preprocess_grubman_2019(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Grubman et al. 2019.
 
     Args:
+    ----
         output_path: Path to save output files.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
 
-    Returns:
+    Returns
+    -------
         None. Raw Data are saved in output_path. Preprocessed data are saved
         in a sub-directory called "preprocessed" in output_path.
     """
     download_grubman_2019(output_path)
     adata = preprocess_grubman_2019(output_path, n_top_genes)
-    save_preprocessed_adata(adata, output_path)
+    save_preprocessed_adata(adata, output_path, normalization_method)
 
 
 def main():
@@ -176,6 +218,14 @@ def main():
         help="Number of top variable genes to retain during preprocessing",
     )
     parser.add_argument(
+        "--normalization-method",
+        type=str,
+        choices=["tc", "tmm", "scran", "basics"],
+        default="tc",
+        dest="normalization_method",
+        help="Normalization method for scaling cell-specific library sizes",
+    )
+    parser.add_argument(
         "--output-path",
         type=str,
         default="/projects/leelab/data/single-cell",
@@ -189,7 +239,11 @@ def main():
     preprocess_data_function = preprocess_function_dict[args.dataset]
     output_path = os.path.join(args.output_path, args.dataset)
     os.makedirs(output_path, exist_ok=True)
-    preprocess_data_function(output_path=output_path, n_top_genes=args.n_top_genes)
+    preprocess_data_function(
+        output_path=output_path,
+        n_top_genes=args.n_top_genes,
+        normalization_method=args.normalization_method,
+    )
     print("Done!")
 
 

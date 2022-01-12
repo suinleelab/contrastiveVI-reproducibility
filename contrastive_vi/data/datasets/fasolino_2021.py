@@ -8,10 +8,10 @@ bioRxiv (2021).
 import os
 
 import pandas as pd
-import scanpy as sc
 from anndata import AnnData
 
 from contrastive_vi.data.utils import (
+    preprocess_workflow,
     read_seurat_cell_metadata,
     read_seurat_feature_metadata,
     read_seurat_raw_counts,
@@ -59,7 +59,9 @@ def read_fasolino_2021(file_directory: str) -> pd.DataFrame:
     return read_seurat_raw_counts(seurat_object_path)
 
 
-def preprocess_fasolino_2021(download_path: str, n_top_genes: int) -> AnnData:
+def preprocess_fasolino_2021(
+    download_path: str, n_top_genes: int, normalization_method: str = "tc"
+) -> AnnData:
     """
     Preprocess expression data from Fasolino et al., 2021.
 
@@ -67,14 +69,16 @@ def preprocess_fasolino_2021(download_path: str, n_top_genes: int) -> AnnData:
     ----
         download_path: Path containing the downloaded Fasolino et al. 2021 data file.
         n_top_genes: Number of most variable genes to retain.
+        normalization_method: Normalization method. Available options are "tc" (total
+        count), "tmm" (trimmed-mean-of-M-values), "scran" (scran deconvolution), and
+        "basics" (BASiCS).
 
     Returns
     -------
         An AnnData object containing single-cell expression data. The layer
-        "count" contains the count data for the most variable genes. The X
-        variable contains the total-count-normalized and log-transformed data
-        for the most variable genes (a copy with all the genes is stored in
-        .raw).
+        "count" contains the count data for the most variable genes. The .X
+        variable contains the normalized and log-transformed data for the most variable
+        genes. A copy of data with all genes is stored in .raw.
     """
 
     df = read_fasolino_2021(download_path)
@@ -85,12 +89,7 @@ def preprocess_fasolino_2021(download_path: str, n_top_genes: int) -> AnnData:
     feature_metadata_df = read_seurat_feature_metadata(seurat_object_path)
 
     adata = AnnData(X=df.values, obs=cell_metadata_df, var=feature_metadata_df)
-    adata.layers["count"] = adata.X.copy()
-    sc.pp.normalize_total(adata)
-    sc.pp.log1p(adata)
-    adata.raw = adata
-    sc.pp.highly_variable_genes(
-        adata, flavor="seurat_v3", n_top_genes=n_top_genes, layer="count", subset=True
+    adata = preprocess_workflow(
+        adata=adata, n_top_genes=n_top_genes, normalization_method=normalization_method
     )
-    adata = adata[adata.layers["count"].sum(1) != 0]  # Remove cells with all zeros.
     return adata
