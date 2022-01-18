@@ -260,9 +260,9 @@ def normalize_basics_denoise(raw_count: np.ndarray, seed: int = 0) -> np.ndarray
     )
     mcmc_chain = basics.BASiCS_MCMC(
         Data=count,
-        N=20000,  # Recommended settings for MCMC convergence.
+        N=5000,  # Reasonable settings for large datasets.
         Thin=20,
-        Burn=10000,
+        Burn=2500,
         Regression=True,
         WithSpikes=False,
     )
