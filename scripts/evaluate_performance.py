@@ -58,7 +58,7 @@ def nan_metrics() -> Dict[str, float]:
     }
 
 
-datasets = ["mcfarland_2020", "zheng_2017", "haber_2017", "fasolino_2021"]
+datasets = ["mcfarland_2020", "zheng_2017", "haber_2017"]
 latent_sizes = [2, 10, 32, 64]
 dataset_split_lookup = constants.DATASET_SPLIT_LOOKUP
 
@@ -69,8 +69,6 @@ non_deterministic_methods = [
     "CGLVM",
     "scVI",
     "contrastiveVI",
-    "TC_contrastiveVI",
-    "mmd_contrastiveVI",
 ]
 methods = deterministic_methods + non_deterministic_methods
 
@@ -95,59 +93,70 @@ for dataset in datasets:
             method_seeds = [""]
         else:
             method_seeds = constants.DEFAULT_SEEDS
+        if method in constants.METHODS_WITHOUT_LIB_NORMALIZATION:
+            normalization_suffixes = [
+                f"_{normalization}" for normalization in constants.NORMALIZATION_LIST
+            ]
+        else:
+            normalization_suffixes = [""]
+
         for latent_size in latent_sizes:
             for method_seed in method_seeds:
-                output_dir = os.path.join(
-                    constants.DEFAULT_RESULTS_PATH,
-                    dataset,
-                    method,
-                    f"latent_{latent_size}",
-                    f"{method_seed}",
-                )
-
-                model_filepath = os.path.join(output_dir, "model.ckpt")
-                if os.path.exists(model_filepath):
-                    model = torch.load(model_filepath, map_location="cpu")
-                    num_epochs = model.history["reconstruction_loss_train"].shape[0]
-                else:
-                    model = None
-                    num_epochs = float("nan")
-
-                representation_filepath = os.path.join(
-                    output_dir, "latent_representations.npy"
-                )
-                if os.path.exists(representation_filepath):
-                    latent_representations = np.load(representation_filepath)
-                    nan_exists = np.isnan(latent_representations).sum() > 0
-                    if nan_exists:
-                        message = f"{representation_filepath} contains nan!"
-                        print(message)
-                        metrics = nan_metrics()
-                else:
-                    message = f"{representation_filepath} does not exist!"
-                    print(message)
-                    latent_representations = None
-                    nan_exists = False
-                    metrics = nan_metrics()
-                    message = "representation file does not exist"
-
-                if latent_representations is not None and not nan_exists:
-                    metrics = evaluate_latent_representations(
-                        target_labels,
-                        latent_representations,
-                        clustering_seed=123,
+                for normalization_suffix in normalization_suffixes:
+                    full_method = f"{method}{normalization_suffix}"
+                    output_dir = os.path.join(
+                        constants.DEFAULT_RESULTS_PATH,
+                        dataset,
+                        full_method,
+                        f"latent_{latent_size}",
+                        f"{method_seed}",
                     )
-                    message = "successful evaluation"
-                metrics = pd.DataFrame({key: [val] for key, val in metrics.items()})
-                metrics["dataset"] = dataset
-                metrics["method"] = method
-                metrics["latent_size"] = latent_size
-                metrics["seed"] = (
-                    "Deterministic" if method in deterministic_methods else method_seed
-                )
-                metrics["num_epochs"] = num_epochs
-                metrics["message"] = message
-                result_df_list.append(metrics)
+
+                    model_filepath = os.path.join(output_dir, "model.ckpt")
+                    if os.path.exists(model_filepath):
+                        model = torch.load(model_filepath, map_location="cpu")
+                        num_epochs = model.history["reconstruction_loss_train"].shape[0]
+                    else:
+                        model = None
+                        num_epochs = float("nan")
+
+                    representation_filepath = os.path.join(
+                        output_dir, "latent_representations.npy"
+                    )
+                    if os.path.exists(representation_filepath):
+                        latent_representations = np.load(representation_filepath)
+                        nan_exists = np.isnan(latent_representations).sum() > 0
+                        if nan_exists:
+                            message = f"{representation_filepath} contains nan!"
+                            print(message)
+                            metrics = nan_metrics()
+                    else:
+                        message = f"{representation_filepath} does not exist!"
+                        print(message)
+                        latent_representations = None
+                        nan_exists = False
+                        metrics = nan_metrics()
+                        message = "representation file does not exist"
+
+                    if latent_representations is not None and not nan_exists:
+                        metrics = evaluate_latent_representations(
+                            target_labels,
+                            latent_representations,
+                            clustering_seed=123,
+                        )
+                        message = "successful evaluation"
+                    metrics = pd.DataFrame({key: [val] for key, val in metrics.items()})
+                    metrics["dataset"] = dataset
+                    metrics["method"] = full_method
+                    metrics["latent_size"] = latent_size
+                    metrics["seed"] = (
+                        "Deterministic"
+                        if method in deterministic_methods
+                        else method_seed
+                    )
+                    metrics["num_epochs"] = num_epochs
+                    metrics["message"] = message
+                    result_df_list.append(metrics)
 
 result_df = pd.concat(result_df_list).reset_index(drop=True)
 result_df.to_csv(
