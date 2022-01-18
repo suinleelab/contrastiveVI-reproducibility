@@ -54,7 +54,7 @@ def download_and_preprocess_zheng_2017(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_zheng_2017(output_path)
-    adata = preprocess_zheng_2017(output_path, n_top_genes)
+    adata = preprocess_zheng_2017(output_path, n_top_genes, normalization_method)
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
@@ -76,7 +76,7 @@ def download_and_preprocess_haber_2017(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_haber_2017(output_path)
-    adata = preprocess_haber_2017(output_path, n_top_genes)
+    adata = preprocess_haber_2017(output_path, n_top_genes, normalization_method)
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
@@ -98,7 +98,7 @@ def download_and_preprocess_blish_2020(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_blish_2020(output_path)
-    adata = preprocess_blish_2020(output_path, n_top_genes)
+    adata = preprocess_blish_2020(output_path, n_top_genes, normalization_method)
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
@@ -120,7 +120,7 @@ def download_and_preprocess_xiang_2020(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_xiang_2020(output_path)
-    adata = preprocess_xiang_2020(output_path, n_top_genes)
+    adata = preprocess_xiang_2020(output_path, n_top_genes, normalization_method)
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
@@ -142,7 +142,7 @@ def download_and_preprocess_fasolino_2021(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_fasolino_2021(output_path)
-    adata = preprocess_fasolino_2021(output_path, n_top_genes)
+    adata = preprocess_fasolino_2021(output_path, n_top_genes, normalization_method)
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
@@ -164,7 +164,7 @@ def download_and_preprocess_mcfarland_2020(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_mcfarland_2020(output_path)
-    adata = preprocess_mcfarland_2020(output_path, n_top_genes)
+    adata = preprocess_mcfarland_2020(output_path, n_top_genes, normalization_method)
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
@@ -186,7 +186,7 @@ def download_and_preprocess_grubman_2019(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_grubman_2019(output_path)
-    adata = preprocess_grubman_2019(output_path, n_top_genes)
+    adata = preprocess_grubman_2019(output_path, n_top_genes, normalization_method)
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
