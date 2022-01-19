@@ -8,6 +8,7 @@ DATASET_LIST = [
     "fasolino_2021",
     "mcfarland_2020",
     "grubman_2019",
+    "norman_2019",
 ]
 DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
 DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
@@ -37,5 +38,10 @@ DATASET_SPLIT_LOOKUP = {
         "background_value": "DMSO",
         "label_key": "TP53_mutation_status",
     },
-    "grubman_2019": {"split_key": "oupSample.batchCond", "background_value": "ct"},
+    "norman_2019": {
+        "split_key": "gene_program",
+        "background_value": "Ctrl",
+        "label_key": "gene_program",
+    },
+    "grubman_2019": {"split_key": "batchCond", "background_value": "ct"},
 }
