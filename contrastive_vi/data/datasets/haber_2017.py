@@ -83,6 +83,7 @@ def preprocess_haber_2017(
 
     df = read_haber_2017(download_path)
     df = df.transpose()
+    df.columns = [x.upper() for x in df.columns] # Converts gene feature names to uppercase
 
     cell_groups = []
     barcodes = []
@@ -105,7 +106,8 @@ def preprocess_haber_2017(
         }
     )
 
-    adata = AnnData(X=df.values, obs=metadata_df)
+    adata = AnnData(df)
+    adata.obs = metadata_df
     adata = adata[adata.obs["condition"] != "Hpoly.Day3"]
     adata = preprocess_workflow(
         adata=adata, n_top_genes=n_top_genes, normalization_method=normalization_method
