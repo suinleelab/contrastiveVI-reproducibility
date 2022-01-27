@@ -1,62 +1,14 @@
 """Evaluate trained models."""
 import os
-from typing import Dict, Optional
 
 import constants
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import torch
-from sklearn.cluster import KMeans
-from sklearn.metrics import (
-    adjusted_mutual_info_score,
-    adjusted_rand_score,
-    calinski_harabasz_score,
-    davies_bouldin_score,
-    silhouette_score,
-)
+from eval_utils import evaluate_latent_representations, nan_metrics
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
-
-
-def evaluate_latent_representations(
-    labels: np.ndarray,
-    latent_representations: np.ndarray,
-    clustering_seed: Optional[int] = None,
-) -> Dict[str, float]:
-    """Evaluate latent representations against ground truth labels"""
-    latent_clusters = (
-        KMeans(n_clusters=len(np.unique(labels)), random_state=clustering_seed)
-        .fit(latent_representations)
-        .labels_
-    )
-
-    silhouette = silhouette_score(latent_representations, labels)
-    calinski_harabasz = calinski_harabasz_score(latent_representations, labels)
-    davies_bouldin = davies_bouldin_score(latent_representations, labels)
-
-    adjusted_random_index = adjusted_rand_score(labels, latent_clusters)
-    adjusted_mutual_info = adjusted_mutual_info_score(labels, latent_clusters)
-
-    return {
-        "silhouette": silhouette,
-        "calinski_harabasz": calinski_harabasz,
-        "davies_bouldin": davies_bouldin,
-        "adjusted_random_index": adjusted_random_index,
-        "adjusted_mutual_info": adjusted_mutual_info,
-    }
-
-
-def nan_metrics() -> Dict[str, float]:
-    """Return nan for all latent representation evaluation metrics."""
-    return {
-        "silhouette": float("nan"),
-        "calinski_harabasz": float("nan"),
-        "davies_bouldin": float("nan"),
-        "adjusted_random_index": float("nan"),
-        "adjusted_mutual_info": float("nan"),
-    }
-
 
 datasets = ["mcfarland_2020", "zheng_2017", "haber_2017"]
 latent_sizes = [2, 10, 32, 64]
