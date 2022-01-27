@@ -405,18 +405,18 @@ elif args.method in tf_models:
             )
 
 elif args.method == "PCPCA":
-    # In the original PCPCA paper they use raw count data and standardize it to 0-mean
-    # unit variance, so we do the same thing here
+    # In the original PCPCA paper they standardize data to 0-mean and unit variance, so
+    # we do the same thing here.
     background_data = StandardScaler().fit_transform(
-        adata[adata.obs[split_key] == background_value].layers["count"]
+        adata[adata.obs[split_key] == background_value].X
     )
     target_data = StandardScaler().fit_transform(
-        adata[adata.obs[split_key] != background_value].layers["count"]
+        adata[adata.obs[split_key] != background_value].X
     )
 
     model = PCPCA(n_components=args.latent_size, gamma=0.7)
     # The PCPCA package expects data to have rows be features and columns be samples
-    # so we transpose the data here
+    # so we transpose the data here.
     model.fit(target_data.transpose(), background_data.transpose())
 
     # model.transform() returns a tuple of transformed target and background data (in
