@@ -63,7 +63,12 @@ def _read_mixseq_df(directory: str) -> pd.DataFrame:
     return df
 
 
-def _get_tp53_mutation_status(directory: str) -> np.array:
+def _get_cell_line_labels(directory: str) -> np.array:
+    classifications = pd.read_csv(os.path.join(directory, "classifications.csv"))
+    return classifications.singlet_ID.values
+
+
+def _get_tp53_mutation_status(cell_line_labels: list[str]) -> np.array:
     # Taken from https://cancerdatascience.org/blog/posts/mix-seq/
     TP53_WT = [
         "LNCAPCLONEFGC_PROSTATE",
@@ -75,10 +80,8 @@ def _get_tp53_mutation_status(directory: str) -> np.array:
         "COV434_OVARY",
     ]
 
-    classifications = pd.read_csv(os.path.join(directory, "classifications.csv"))
     TP53_mutation_status = [
-        "Wild Type" if x in TP53_WT else "Mutation"
-        for x in classifications.singlet_ID.values
+        "Wild Type" if x in TP53_WT else "Mutation" for x in cell_line_labels
     ]
     return np.array(TP53_mutation_status)
 
@@ -139,8 +142,9 @@ def preprocess_mcfarland_2020(
     idasanutlin_dir = os.path.join(
         download_path, "idasanutlin", "Idasanutlin_24hr_expt1"
     )
+    idasanutlin_adata.obs["cell_line"] = _get_cell_line_labels(idasanutlin_dir)
     idasanutlin_adata.obs["TP53_mutation_status"] = _get_tp53_mutation_status(
-        idasanutlin_dir
+        idasanutlin_adata.obs["cell_line"]
     )
     idasanutlin_adata.obs["condition"] = np.repeat(
         "Idasanutlin", idasanutlin_adata.shape[0]
@@ -148,7 +152,10 @@ def preprocess_mcfarland_2020(
 
     dmso_adata = AnnData(dmso_df)
     dmso_dir = os.path.join(download_path, "dmso", "DMSO_24hr_expt1")
-    dmso_adata.obs["TP53_mutation_status"] = _get_tp53_mutation_status(dmso_dir)
+    dmso_adata.obs["cell_line"] = _get_cell_line_labels(dmso_dir)
+    dmso_adata.obs["TP53_mutation_status"] = _get_tp53_mutation_status(
+        dmso_adata.obs["cell_line"]
+    )
     dmso_adata.obs["condition"] = np.repeat("DMSO", dmso_adata.shape[0])
 
     full_adata = anndata.concat([idasanutlin_adata, dmso_adata])
