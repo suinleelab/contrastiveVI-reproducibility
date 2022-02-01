@@ -130,31 +130,6 @@ class TestContrastiveVIModel:
         assert type(exprs_df) == pd.DataFrame
         assert exprs_df.shape == (n_cells, n_genes)
 
-    def test_get_salient_normalized_expression(self, mock_contrastive_vi_model):
-        n_samples = 50
-        n_cells = mock_contrastive_vi_model.adata.n_obs
-        n_genes = mock_contrastive_vi_model.adata.n_vars
-
-        one_sample_expr = mock_contrastive_vi_model.get_salient_normalized_expression(
-            n_samples=1, return_numpy=True
-        )
-        assert type(one_sample_expr) == np.ndarray
-        assert one_sample_expr.shape == (n_cells, n_genes)
-
-        many_sample_expr = mock_contrastive_vi_model.get_salient_normalized_expression(
-            n_samples=n_samples,
-            return_mean=False,
-        )
-        assert type(many_sample_expr) == np.ndarray
-        assert many_sample_expr.shape == (n_samples, n_cells, n_genes)
-
-        expr_df = mock_contrastive_vi_model.get_salient_normalized_expression(
-            n_samples=1,
-            return_numpy=False,
-        )
-        assert type(expr_df) == pd.DataFrame
-        assert expr_df.shape == (n_cells, n_genes)
-
     def test_get_normalized_expression_fold_change(self, mock_contrastive_vi_model):
         n_samples = 50
         n_cells = mock_contrastive_vi_model.adata.n_obs
@@ -174,6 +149,18 @@ class TestContrastiveVIModel:
         de_df = mock_contrastive_vi_model.differential_expression(
             groupby="labels",
             group1=["label_0"],
+        )
+        n_vars = mock_contrastive_vi_model.adata.n_vars
+        assert type(de_df) == pd.DataFrame
+        assert de_df.shape[0] == n_vars
+
+    def test_differential_expression_with_target_idx(
+        self, mock_contrastive_vi_model, mock_adata_target_indices
+    ):
+        de_df = mock_contrastive_vi_model.differential_expression(
+            groupby="labels",
+            group1=["label_0"],
+            target_idx=mock_adata_target_indices,
         )
         n_vars = mock_contrastive_vi_model.adata.n_vars
         assert type(de_df) == pd.DataFrame

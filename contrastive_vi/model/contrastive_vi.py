@@ -402,7 +402,7 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
         return {"background": background_exprs, "salient": salient_exprs}
 
     @torch.no_grad()
-    def get_salient_normalized_expression(
+    def get_specific_normalized_expression(
         self,
         adata: Optional[AnnData] = None,
         indices: Optional[Sequence[int]] = None,
@@ -414,11 +414,15 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
         batch_size: Optional[int] = None,
         return_mean: bool = True,
         return_numpy: Optional[bool] = None,
-    ) -> Union[np.ndarray, pd.DataFrame]:
+        expression_type: Optional[str] = None,
+        indices_to_return_salient: Optional[Sequence[int]] = None,
+    ):
         """
         Return the normalized (decoded) gene expression.
 
-        Gene expressions are decoded from both the background and salient latent space.
+        Gene expressions are decoded from either the background or salient latent space.
+        One of `expression_type` or `indices_to_return_salient` should have an input
+        argument.
 
         Args:
         ----
@@ -441,6 +445,13 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
         return_numpy: Return a `numpy.ndarray` instead of a `pandas.DataFrame`.
             DataFrame includes gene names as columns. If either `n_samples=1` or
             `return_mean=True`, defaults to `False`. Otherwise, it defaults to `True`.
+        expression_type: One of {"salient", "background"} to specify the type of
+            normalized expression to return.
+        indices_to_return_salient: If `indices` is a subset of
+            `indices_to_return_salient`, normalized expressions derived from background
+            and salient latent embeddings are returned. If `indices` is not `None` and
+            is not a subset of `indices_to_return_salient`, normalized expressions
+            derived only from background latent embeddings are returned.
 
         Returns
         -------
@@ -448,19 +459,41 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
             `(samples, cells, genes)`. Otherwise, shape is `(cells, genes)`. In this
             case, return type is `pandas.DataFrame` unless `return_numpy` is `True`.
         """
-        exprs = self.get_normalized_expression(
-            adata=adata,
-            indices=indices,
-            transform_batch=transform_batch,
-            gene_list=gene_list,
-            library_size=library_size,
-            n_samples=n_samples,
-            n_samples_overall=n_samples_overall,
-            batch_size=batch_size,
-            return_mean=return_mean,
-            return_numpy=return_numpy,
-        )
-        return exprs["salient"]
+        is_expression_type_none = expression_type is None
+        is_indices_to_return_salient_none = indices_to_return_salient is None
+        if is_expression_type_none and is_indices_to_return_salient_none:
+            raise ValueError(
+                "Both expression_type and indices_to_return_salient are None! "
+                "Exactly one of them needs to be supplied with an input argument."
+            )
+        elif (not is_expression_type_none) and (not is_indices_to_return_salient_none):
+            raise ValueError(
+                "Both expression_type and indices_to_return_salient have an input "
+                "argument! Exactly one of them needs to be supplied with an input "
+                "argument."
+            )
+        else:
+            exprs = self.get_normalized_expression(
+                adata=adata,
+                indices=indices,
+                transform_batch=transform_batch,
+                gene_list=gene_list,
+                library_size=library_size,
+                n_samples=n_samples,
+                n_samples_overall=n_samples_overall,
+                batch_size=batch_size,
+                return_mean=return_mean,
+                return_numpy=return_numpy,
+            )
+            if not is_expression_type_none:
+                return exprs[expression_type]
+            else:
+                if indices is None:
+                    indices = np.arange(adata.n_obs)
+                if set(indices).issubset(set(indices_to_return_salient)):
+                    return exprs["salient"]
+                else:
+                    return exprs["background"]
 
     def differential_expression(
         self,
@@ -479,6 +512,7 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
         batchid2: Optional[Iterable[str]] = None,
         fdr_target: float = 0.05,
         silent: bool = False,
+        target_idx: Optional[Sequence[int]] = None,
         **kwargs,
     ) -> pd.DataFrame:
         r"""
@@ -523,6 +557,11 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
             are decoded on each group in `group1` and `group2`, respectively.
         fdr_target: Tag features as DE based on posterior expected false discovery rate.
         silent: If `True`, disables the progress bar. Default: `False`.
+        target_idx: If not `None`, a boolean or integer identifier should be used for
+            cells in the contrastive target group. Normalized expression values derived
+            from both salient and background latent embeddings are used when
+            {group1, group2} is a subset of the target group, otherwise background
+            normalized expression values are used.
         **kwargs: Keyword args for
             `scvi.model.base.DifferentialComputation.get_bayes_factors`.
 
@@ -532,12 +571,32 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
         """
         adata = self._validate_anndata(adata)
         col_names = _get_var_names_from_setup_anndata(adata)
-        model_fn = partial(
-            self.get_salient_normalized_expression,
-            return_numpy=True,
-            n_samples=100,
-            batch_size=batch_size,
-        )
+
+        if target_idx is not None:
+            target_idx = np.array(target_idx)
+            if target_idx.dtype is np.dtype("bool"):
+                assert (
+                    len(target_idx) == adata.n_obs
+                ), "target_idx mask must be the same length as adata!"
+                target_idx = np.arange(adata.n_obs)[target_idx]
+            model_fn = partial(
+                self.get_specific_normalized_expression,
+                return_numpy=True,
+                n_samples=100,
+                batch_size=batch_size,
+                expression_type=None,
+                indices_to_return_salient=target_idx,
+            )
+        else:
+            model_fn = partial(
+                self.get_specific_normalized_expression,
+                return_numpy=True,
+                n_samples=100,
+                batch_size=batch_size,
+                expression_type="salient",
+                indices_to_return_salient=None,
+            )
+
         result = _de_core(
             adata,
             model_fn,
