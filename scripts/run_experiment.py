@@ -34,6 +34,7 @@ parser.add_argument(
         "TC_contrastiveVI",
         "mmd_contrastiveVI",
         "scVI",
+        "scVI_with_background",
         "PCPCA",
         "cPCA",
         "CPLVM",
@@ -118,6 +119,7 @@ else:
 
 torch_models = [
     "scVI",
+    "scVI_with_background",
     "cVAE",
     "contrastiveVI",
     "TC_contrastiveVI",
@@ -257,6 +259,23 @@ if args.method in torch_models:
                 max_epochs=500,
             )
             latent_representations = model.get_latent_representation(adata=target_adata)
+
+        elif args.method == "scVI_with_background":
+            # Train scVI with both target and background samples to test target vs.
+            # background differential expression tests
+            SCVI.setup_anndata(adata, layer="count")
+            model = SCVI(adata, n_latent=args.latent_size, use_observed_lib_size=False)
+            model.train(
+                check_val_every_n_epoch=1,
+                train_size=0.8,
+                use_gpu=use_gpu,
+                early_stopping=True,
+                max_epochs=500,
+            )
+            target_adata = adata[adata.obs[split_key] != background_value].copy()
+            latent_representations = model.get_latent_representation(
+                adata=target_adata
+            )
 
         elif args.method == "cVAE":
             CVAEModel.setup_anndata(adata)
