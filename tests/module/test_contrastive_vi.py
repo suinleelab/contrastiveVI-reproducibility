@@ -1,5 +1,6 @@
 import pytest
 import torch
+from scvi import _CONSTANTS
 from scvi.module.base import LossRecorder
 
 from contrastive_vi.module.contrastive_vi import ContrastiveVIModule
@@ -422,3 +423,28 @@ class TestContrastiveVIModuleLoss:
                 assert key in inference_outputs[data_source].keys()
             for key in required_generative_output_keys:
                 assert key in generative_outputs[data_source].keys()
+
+
+class TestContrastiveVISampling:
+    @pytest.mark.parametrize("data_source", ["background", "target"])
+    def test_sample_mean_with_one_sample(
+        self, mock_contrastive_vi_module, mock_batch, data_source
+    ):
+        expected_shape = mock_batch[_CONSTANTS.X_KEY].shape
+        sample_mean = mock_contrastive_vi_module.sample_mean(
+            tensors=mock_batch, data_source=data_source, n_samples=1
+        )
+        assert type(sample_mean) is torch.Tensor
+        assert sample_mean.shape == expected_shape
+
+    @pytest.mark.parametrize("data_source", ["background", "target"])
+    def test_sample_mean_with_many_samples(
+        self, mock_contrastive_vi_module, mock_batch, data_source
+    ):
+        n_samples = 5
+        expected_shape = mock_batch[_CONSTANTS.X_KEY].shape
+        sample_mean = mock_contrastive_vi_module.sample_mean(
+            tensors=mock_batch, data_source=data_source, n_samples=n_samples
+        )
+        assert type(sample_mean) is torch.Tensor
+        assert sample_mean.shape == (n_samples, *expected_shape)

@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import scvi
+from scvi.dataloaders import AnnDataLoader
 
 from contrastive_vi.data.dataloaders.contrastive_dataloader import ContrastiveDataLoader
 from contrastive_vi.data.utils import get_library_log_means_and_vars
@@ -99,3 +100,17 @@ def mock_contrastive_dataloader(
 @pytest.fixture
 def mock_contrastive_batch(mock_contrastive_dataloader):
     return get_next_batch(mock_contrastive_dataloader)
+
+
+@pytest.fixture
+def mock_dataloader(mock_adata):
+    return AnnDataLoader(
+        mock_adata,
+        shuffle=False,
+        batch_size=32,
+    )
+
+
+@pytest.fixture
+def mock_batch(mock_dataloader):
+    return get_next_batch(mock_dataloader)
