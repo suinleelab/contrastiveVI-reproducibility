@@ -632,3 +632,62 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
         output *= scaling
         output = output.cpu().numpy()
         return output
+
+    @torch.no_grad()
+    def get_sample_mean(
+        self,
+        data_source: str,
+        adata: Optional[AnnData] = None,
+        indices: Optional[Sequence[int]] = None,
+        n_samples: int = 1,
+        batch_size: Optional[int] = None,
+        return_mean: bool = True,
+    ) -> np.ndarray:
+        """
+        Get posterior mean samples for cells in an AnnData.
+        Args:
+        ----
+            data_source: {"background", "target"} to indicate whether samples are from
+                the background or target dataset.
+            adata: AnnData object with equivalent structure to initial AnnData. If
+                `None`, defaults to the AnnData object used to initialize the model.
+            indices: Indices of cells in adata to use. If `None`, all cells are used.
+            n_samples: Number of samples for the posterior mean.
+            batch_size: Mini-batch size for data loading into model. Defaults to
+                `scvi.settings.batch_size`.
+            return_mean: If `n_samples` > 1, whether to return the average of posterior
+                mean samples.
+
+        Returns
+        -------
+            If `n_samples` > 1 and `return_mean` is `False`, an numpy array with shape
+            `(n_samples, n_obs, n_vars)`. Otherwise, an numpy array with shape
+            `(n_obs, n_vars)`.
+        """
+        available_data_sources = ["background", "target"]
+        assert (
+            data_source in available_data_sources
+        ), f"data_source = {data_source} is not one of {available_data_sources}!"
+        adata = self._validate_anndata(adata)
+        data_loader = self._make_data_loader(
+            adata=adata,
+            indices=indices,
+            batch_size=batch_size,
+            shuffle=False,
+            data_loader_class=AnnDataLoader,
+        )
+        sample_mean_list = []
+        for tensors in data_loader:
+            sample_mean = self.module.sample_mean(
+                tensors=tensors, data_source=data_source, n_samples=n_samples
+            )
+            sample_mean_list += [sample_mean.detach().cpu()]
+
+        if n_samples > 1:
+            sample_mean = torch.cat(sample_mean_list, dim=1)
+        else:
+            sample_mean = torch.cat(sample_mean_list, dim=0)
+
+        if n_samples > 1 and return_mean:
+            sample_mean = sample_mean.mean(0)
+        return sample_mean.numpy()

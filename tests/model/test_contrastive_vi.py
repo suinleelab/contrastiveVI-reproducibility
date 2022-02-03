@@ -165,3 +165,45 @@ class TestContrastiveVIModel:
         n_vars = mock_contrastive_vi_model.adata.n_vars
         assert type(de_df) == pd.DataFrame
         assert de_df.shape[0] == n_vars
+
+    @pytest.mark.parametrize("data_source", ["background", "target"])
+    def test_get_sample_mean_with_one_sample(
+        self, mock_contrastive_vi_model, mock_adata, data_source
+    ):
+        expected_shape = (mock_adata.n_obs, mock_adata.n_vars)
+        sample_mean = mock_contrastive_vi_model.get_sample_mean(
+            data_source=data_source,
+            adata=mock_adata,
+            n_samples=1,
+            return_mean=True,
+        )
+        assert sample_mean.shape == expected_shape
+
+        sample_mean = mock_contrastive_vi_model.get_sample_mean(
+            data_source=data_source,
+            adata=mock_adata,
+            n_samples=1,
+            return_mean=False,
+        )
+        assert sample_mean.shape == expected_shape
+
+    @pytest.mark.parametrize("data_source", ["background", "target"])
+    def test_get_sample_mean_with_many_samples(
+        self, mock_contrastive_vi_model, mock_adata, data_source
+    ):
+        n_samples = 5
+        sample_mean = mock_contrastive_vi_model.get_sample_mean(
+            data_source=data_source,
+            adata=mock_adata,
+            n_samples=n_samples,
+            return_mean=True,
+        )
+        assert sample_mean.shape == (mock_adata.n_obs, mock_adata.n_vars)
+
+        sample_mean = mock_contrastive_vi_model.get_sample_mean(
+            data_source=data_source,
+            adata=mock_adata,
+            n_samples=n_samples,
+            return_mean=False,
+        )
+        assert sample_mean.shape == (n_samples, mock_adata.n_obs, mock_adata.n_vars)

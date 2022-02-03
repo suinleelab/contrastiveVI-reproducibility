@@ -10,7 +10,6 @@ from scvi.module.base import BaseModuleClass, LossRecorder, auto_move_data
 from scvi.nn import Decoder, Encoder
 from torch.distributions import Normal
 from torch.distributions import kl_divergence as kl
-from math import floor, ceil
 
 torch.backends.cudnn.benchmark = True
 
@@ -80,7 +79,6 @@ class CVAEModule(BaseModuleClass):
             var_activation=None,
         )
 
-
         # Decoder from latent variable to distribution parameters in data space.
         total_latent_size = n_background_latent + n_salient_latent
         self.discriminator = nn.Linear(total_latent_size, 1)
@@ -123,7 +121,9 @@ class CVAEModule(BaseModuleClass):
     def _get_inference_input(
         self, concat_tensors: Dict[str, Dict[str, torch.Tensor]]
     ) -> Dict[str, Dict[str, torch.Tensor]]:
-        background = self._get_inference_input_from_concat_tensors(concat_tensors, "background")
+        background = self._get_inference_input_from_concat_tensors(
+            concat_tensors, "background"
+        )
         target = self._get_inference_input_from_concat_tensors(concat_tensors, "target")
         # Ensure batch sizes are the same.
         min_batch_size = self._get_min_batch_size(concat_tensors)
@@ -251,9 +251,7 @@ class CVAEModule(BaseModuleClass):
             latent,
             batch_index,
         )
-        return dict(
-            p_m=p_m, p_v=p_v
-        )
+        return dict(p_m=p_m, p_v=p_v)
 
     @auto_move_data
     def generative(
@@ -286,10 +284,7 @@ class CVAEModule(BaseModuleClass):
         return dict(background=background_outputs, target=target_outputs)
 
     @staticmethod
-    def reconstruction_loss(
-        x: torch.Tensor,
-        p_m: torch.Tensor
-    ) -> torch.Tensor:
+    def reconstruction_loss(x: torch.Tensor, p_m: torch.Tensor) -> torch.Tensor:
         """
         Compute likelihood loss for Gaussian distribution.
 
@@ -304,7 +299,7 @@ class CVAEModule(BaseModuleClass):
             of latent samples == 1, the tensor has shape `(batch_size, )`. If number
             of latent samples > 1, the tensor has shape `(n_samples, batch_size)`.
         """
-        recon_loss = F.mse_loss(p_m, x, reduction='none').sum(dim=-1)
+        recon_loss = F.mse_loss(p_m, x, reduction="none").sum(dim=-1)
         return recon_loss
 
     @staticmethod
@@ -341,7 +336,6 @@ class CVAEModule(BaseModuleClass):
         generative_outputs: Dict[str, torch.Tensor],
     ) -> Dict[str, torch.Tensor]:
         x = tensors[_CONSTANTS.X_KEY]
-        batch_index = tensors[_CONSTANTS.BATCH_KEY]
 
         qz_m = inference_outputs["qz_m"]
         qz_v = inference_outputs["qz_v"]
@@ -433,15 +427,13 @@ class CVAEModule(BaseModuleClass):
         z1, z2, s1, s2 = z1[:size], z2[:size], s1[:size], s2[:size]
 
         q = torch.cat([torch.cat([z1, s1], dim=-1), torch.cat([z2, s2], dim=-1)])
-        q_bar = torch.cat(
-            [torch.cat([z1, s2], dim=-1), torch.cat([z2, s1], dim=-1)]
-        )
+        q_bar = torch.cat([torch.cat([z1, s2], dim=-1), torch.cat([z2, s1], dim=-1)])
 
         q_bar_score = F.sigmoid(self.discriminator(q_bar))
         q_score = F.sigmoid(self.discriminator(q))
 
         tc_loss = torch.log(q_score / (1 - q_score))
-        discriminator_loss = (- torch.log(q_score) - torch.log(1 - q_bar_score))
+        discriminator_loss = -torch.log(q_score) - torch.log(1 - q_bar_score)
 
         loss = (
             torch.sum(recon_loss)
@@ -456,6 +448,48 @@ class CVAEModule(BaseModuleClass):
         )
         kl_global = torch.tensor(0.0)
         return LossRecorder(loss, recon_loss, kl_local, kl_global)
+
+    @torch.no_grad()
+    def sample_mean(
+        self,
+        tensors: Dict[str, torch.Tensor],
+        data_source: str,
+        n_samples: int = 1,
+    ) -> torch.Tensor:
+        """
+        Sample posterior mean.
+
+        Args:
+        ----
+            tensors: Data from AnnDataLoader set up with
+                `ContrastiveVIModel.setup_anndata`.
+            data_source: {"background", "target"} to indicate whether samples are from
+                the background or target dataset.
+            n_samples: Number of samples for the posterior mean.
+
+        Returns
+        -------
+        If `n_samples` > 1, a tensor with shape `(n_samples, batch_size, n_input)`.
+        Otherwise, a tensor with shape `(batch_size, n_input)`.
+        """
+        available_data_sources = ["background", "target"]
+        assert (
+            data_source in available_data_sources
+        ), f"data_source = {data_source} is not one of {available_data_sources}!"
+        x = tensors[_CONSTANTS.X_KEY]
+        batch_index = tensors[_CONSTANTS.BATCH_KEY]
+        inference_outputs = self._generic_inference(
+            x=x, batch_index=batch_index, n_samples=n_samples
+        )
+        s = inference_outputs["s"]
+        if data_source == "background":
+            s = torch.zeros_like(s)
+        generative_outputs = self._generic_generative(
+            z=inference_outputs["z"],
+            s=s,
+            batch_index=batch_index,
+        )
+        return generative_outputs["p_m"]
 
     @torch.no_grad()
     def sample(self):

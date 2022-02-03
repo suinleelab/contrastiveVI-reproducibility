@@ -634,6 +634,54 @@ class ContrastiveVIModule(BaseModuleClass):
         return LossRecorder(loss, recon_loss, kl_local, kl_global)
 
     @torch.no_grad()
+    def sample_mean(
+        self,
+        tensors: Dict[str, torch.Tensor],
+        data_source: str,
+        n_samples: int = 1,
+    ) -> torch.Tensor:
+        """
+        Sample posterior mean.
+
+        Args:
+        ----
+            tensors: Data from AnnDataLoader set up with
+                `ContrastiveVIModel.setup_anndata`.
+            data_source: {"background", "target"} to indicate whether samples are from
+                the background or target dataset.
+            n_samples: Number of samples for the posterior mean.
+
+        Returns
+        -------
+        If `n_samples` > 1, a tensor with shape `(n_samples, batch_size, n_input)`.
+        Otherwise, a tensor with shape `(batch_size, n_input)`.
+        """
+        available_data_sources = ["background", "target"]
+        assert (
+            data_source in available_data_sources
+        ), f"data_source = {data_source} is not one of {available_data_sources}!"
+        x = tensors[_CONSTANTS.X_KEY]
+        batch_index = tensors[_CONSTANTS.BATCH_KEY]
+        inference_outputs = self._generic_inference(
+            x=x, batch_index=batch_index, n_samples=n_samples
+        )
+        s = inference_outputs["s"]
+        if data_source == "background":
+            s = torch.zeros_like(s)
+        generative_outputs = self._generic_generative(
+            z=inference_outputs["z"],
+            s=s,
+            library=inference_outputs["library"],
+            batch_index=batch_index,
+        )
+        distribution = ZeroInflatedNegativeBinomial(
+            mu=generative_outputs["px_rate"],
+            theta=generative_outputs["px_r"],
+            zi_logits=generative_outputs["px_dropout"],
+        )
+        return distribution.mean
+
+    @torch.no_grad()
     def sample(self):
         raise NotImplementedError
 
