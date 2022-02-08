@@ -7,7 +7,7 @@ mechanism of action. Nature Communications (2020).
 """
 import os
 import shutil
-from typing import Tuple
+from typing import List, Tuple
 
 import anndata
 import numpy as np
@@ -68,7 +68,7 @@ def _get_cell_line_labels(directory: str) -> np.array:
     return classifications.singlet_ID.values
 
 
-def _get_tp53_mutation_status(cell_line_labels: list[str]) -> np.array:
+def _get_tp53_mutation_status(cell_line_labels: List[str]) -> np.array:
     # Taken from https://cancerdatascience.org/blog/posts/mix-seq/
     TP53_WT = [
         "LNCAPCLONEFGC_PROSTATE",

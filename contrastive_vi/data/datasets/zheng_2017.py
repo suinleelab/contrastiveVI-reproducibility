@@ -6,6 +6,7 @@ transcriptional profiling of single cells. Nature Communications (2017).
 """
 import os
 import shutil
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -93,7 +94,11 @@ def read_zheng_2017(file_directory: str) -> pd.DataFrame:
 
 
 def preprocess_zheng_2017(
-    download_path: str, n_top_genes: int, normalization_method: str = "tc"
+    download_path: str,
+    n_top_genes: Optional[int] = None,
+    normalization_method: str = "tc",
+    top_genes_file: Optional[str] = None,
+    top_genes_file_colname: Optional[str] = None,
 ) -> AnnData:
     """
     Preprocess expression data from Zheng et al. 2017.
@@ -106,6 +111,9 @@ def preprocess_zheng_2017(
         normalization_method: Normalization method. Available options are "tc" (total
         count), "tmm" (trimmed-mean-of-M-values), "scran" (scran deconvolution), and
         "basics" (BASiCS).
+        top_genes_file: Path to csv file containing the top genes to retain.
+        top_genes_file_colname: Column name in `top_genes_file` containing the top gene
+            names.
 
     Returns
     -------
@@ -147,6 +155,10 @@ def preprocess_zheng_2017(
     meta_data = pd.concat(meta_data_list)
     adata = AnnData(X=data.reset_index(drop=True), obs=meta_data.reset_index(drop=True))
     adata = preprocess_workflow(
-        adata=adata, n_top_genes=n_top_genes, normalization_method=normalization_method
+        adata=adata,
+        n_top_genes=n_top_genes,
+        normalization_method=normalization_method,
+        top_genes_file=top_genes_file,
+        top_genes_file_colname=top_genes_file_colname,
     )
     return adata

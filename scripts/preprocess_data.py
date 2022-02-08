@@ -1,4 +1,4 @@
-"""Download, preprocess, and save data as AnnData."""
+"""`Download`, preprocess, and save data as AnnData."""
 import argparse
 import os
 import sys
@@ -41,10 +41,16 @@ from contrastive_vi.data.utils import save_preprocessed_adata
 
 
 def download_and_preprocess_zheng_2017(
-    output_path: str, n_top_genes: int, normalization_method: str
+    output_path: str,
+    n_top_genes: int,
+    normalization_method: str,
 ) -> None:
     """
     Download, preprocess, and save data from Zheng et al. 2017.
+
+    The highly variable gene selection is not stable for this dataset because there are
+    ties. If a csv file containing n top genes exists, use it to get the same selected
+    genes across calls to this function.
 
     Args:
     ----
@@ -58,7 +64,21 @@ def download_and_preprocess_zheng_2017(
         in a sub-directory called "preprocessed" in output_path.
     """
     download_zheng_2017(output_path)
-    adata = preprocess_zheng_2017(output_path, n_top_genes, normalization_method)
+    top_genes_file = os.path.join(output_path, f"top_{n_top_genes}_genes.csv")
+    if os.path.exists(top_genes_file):
+        print(f"Using saved top {n_top_genes} genes for Zheng et al. 2017.")
+        n_top_genes = None
+        top_genes_file_colname = "gene"
+    else:
+        top_genes_file = None
+        top_genes_file_colname = None
+    adata = preprocess_zheng_2017(
+        download_path=output_path,
+        n_top_genes=n_top_genes,
+        normalization_method=normalization_method,
+        top_genes_file=top_genes_file,
+        top_genes_file_colname=top_genes_file_colname,
+    )
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
