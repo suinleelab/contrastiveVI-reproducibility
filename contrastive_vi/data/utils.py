@@ -1,6 +1,6 @@
 """Data preprocessing utilities."""
 import os
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -274,7 +274,11 @@ def normalize_basics_denoise(raw_count: np.ndarray, seed: int = 0) -> np.ndarray
 
 
 def preprocess_workflow(
-    adata: AnnData, n_top_genes: int, normalization_method: str = "tc"
+    adata: AnnData,
+    n_top_genes: Optional[int] = None,
+    normalization_method: str = "tc",
+    top_genes_file: Optional[str] = None,
+    top_genes_file_colname: Optional[str] = None,
 ) -> AnnData:
     """
     Preprocess single-cell data in a pipeline workflow.
@@ -288,6 +292,9 @@ def preprocess_workflow(
         normalization_method: Normalization method. Available options are "tc" (total
         count), "tmm" (trimmed-mean-of-M-values), "scran" (scran deconvolution), and
         "basics" (BASiCS).
+        top_genes_file: Path to csv file containing the top genes to retain.
+        top_genes_file_colname: Column name in `top_genes_file` containing the top gene
+            names.
 
     Returns
     -------
@@ -303,13 +310,14 @@ def preprocess_workflow(
     )
 
     adata.layers["count"] = adata.X.copy()
-    sc.pp.highly_variable_genes(
-        adata,
-        flavor="seurat_v3",
-        n_top_genes=n_top_genes,
-        layer="count",
-        subset=False,
-    )
+    if n_top_genes is not None:
+        sc.pp.highly_variable_genes(
+            adata,
+            flavor="seurat_v3",
+            n_top_genes=n_top_genes,
+            layer="count",
+            subset=False,
+        )
 
     adata = adata[adata.layers["count"].sum(1) != 0]  # Remove cells with all zeros.
 
@@ -328,7 +336,11 @@ def preprocess_workflow(
     sc.pp.log1p(adata)
 
     adata.raw = adata
-    adata = adata[:, adata.var["highly_variable"]]
+    if n_top_genes is not None:
+        adata = adata[:, adata.var["highly_variable"]]
+    elif top_genes_file is not None and top_genes_file_colname is not None:
+        top_genes = pd.read_csv(top_genes_file)
+        adata = adata[:, top_genes[top_genes_file_colname].tolist()]
     return adata
 
 
