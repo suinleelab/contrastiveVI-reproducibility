@@ -1,8 +1,10 @@
 # contrastiveVI
 
-<img align="center" src="./sketch/sketch.png?raw=true" width="750">
+<center>
+    <img src="./sketch.png?raw=true" width="750">
+</center>
 
-contrastiveVI is a generative model designed to isolate factors of variation specific to 
+contrastiveVI is a generative model designed to isolate factors of variation specific to
 a group of "target" cells (e.g. from specimens with a given disease) from those shared
 with a group of "background" cells (e.g. from healthy specimens). contrastiveVI is
 implemented in [scvi-tools](https://scvi-tools.org/).
@@ -25,19 +27,22 @@ contrastiveVI to isolate latent factors of variation specific to the target cell
 from those shared with a background into separate latent spaces.
 * Run clustering algorithms on the target-specific latent space to discover sub-groups
 of target cells
-* Perform differential expression testing for discovered sub-groups of target cells 
+* Perform differential expression testing for discovered sub-groups of target cells
 using a procedure similar to that of [scVI
 ](https://www.nature.com/articles/s41592-018-0229-2).
 
 ### Colab Notebook Examples
 
+* [Applying contrastiveVI to see the effects of stem cell transplants for leukemia patients
+](https://colab.research.google.com/drive/1yOTCVNWY6BydS1bppOYCWHvrxuvhMxZV?usp=sharing)
 * [Applying contrastiveVI to separate mouse intestinal epithelial cells
 infected with different pathogens by pathogen type
 ](https://colab.research.google.com/drive/1z0AcKQg7juArXGCx1XKj6skojWKRlDMC?usp=sharing)
 * [Applying contrastiveVI to better understand the results of a MIX-Seq
 small-molecule drug perturbation experiment
 ](https://colab.research.google.com/drive/1cMaJpMe3g0awCiwsw13oG7RvGnmXNCac?usp=sharing)
-
+* [Applying contrastiveVI to better understand heterogeneity in cellular responses to Alzheimer's disease
+](https://colab.research.google.com/drive/1_R1YWQQUJzgQ6kz1XqglL5xZn8b8h1TX?usp=sharing)
 
 
 ## Development guide
