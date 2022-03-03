@@ -10,13 +10,12 @@ from eval_utils import evaluate_latent_representations, nan_metrics
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 
-datasets = ["mcfarland_2020", "zheng_2017", "haber_2017"]
+datasets = ["mcfarland_2020", "zheng_2017", "haber_2017", "norman_2019"]
 latent_sizes = [2, 10, 32, 64]
 dataset_split_lookup = constants.DATASET_SPLIT_LOOKUP
 
-deterministic_methods = ["cPCA", "PCPCA"]
+deterministic_methods = []
 non_deterministic_methods = [
-    "cVAE",
     "CPLVM",
     "CGLVM",
     "scVI",
@@ -31,7 +30,7 @@ for dataset in datasets:
     adata = sc.read_h5ad(
         os.path.join(
             constants.DEFAULT_DATA_PATH,
-            f"{dataset}/preprocessed/adata_top_2000_genes.h5ad",
+            f"{dataset}/preprocessed/adata_top_2000_genes_tc.h5ad",
         )
     )
     split_key = dataset_split_lookup[dataset]["split_key"]
@@ -56,8 +55,20 @@ for dataset in datasets:
             for method_seed in method_seeds:
                 for normalization_suffix in normalization_suffixes:
                     full_method = f"{method}{normalization_suffix}"
+                    if dataset == "zheng_2017":
+                        results_path = os.path.join(
+                            "/projects/leelab/contrastiveVI",
+                            "results-fixed-background-size",
+                        )
+                    else:
+                        results_path = constants.DEFAULT_RESULTS_PATH
+                    if dataset == "norman_2019":
+                        cluster_algorithm = "gmm"
+                    else:
+                        cluster_algorithm = "kmeans"
+
                     output_dir = os.path.join(
-                        constants.DEFAULT_RESULTS_PATH,
+                        results_path,
                         dataset,
                         full_method,
                         f"latent_{latent_size}",
@@ -95,6 +106,7 @@ for dataset in datasets:
                             target_labels,
                             latent_representations,
                             clustering_seed=123,
+                            cluster_algorithm=cluster_algorithm,
                         )
                         message = "successful evaluation"
                     metrics = pd.DataFrame({key: [val] for key, val in metrics.items()})
