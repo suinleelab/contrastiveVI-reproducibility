@@ -9,6 +9,10 @@ from contrastive_vi.data.datasets.blish_2020 import (
     download_blish_2020,
     preprocess_blish_2020,
 )
+from contrastive_vi.data.datasets.cain_2020 import (
+    download_cain_2020,
+    preprocess_cain_2020,
+)
 from contrastive_vi.data.datasets.fasolino_2021 import (
     download_fasolino_2021,
     preprocess_fasolino_2021,
@@ -236,6 +240,28 @@ def download_and_preprocess_norman_2019(
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
+def download_and_preprocess_cain_2020(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Cain et al. 2020.
+
+    Args:
+    ----
+        output_path: Path to save output files.
+        n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
+
+    Returns
+    -------
+        None. Raw Data are saved in output_path. Preprocessed data are saved
+        in a sub-directory called "preprocessed" in output_path.
+    """
+    download_cain_2020(output_path)
+    adata = preprocess_cain_2020(output_path, n_top_genes, normalization_method)
+    save_preprocessed_adata(adata, output_path, normalization_method)
+
+
 def main():
     """Run main function."""
     preprocess_function_dict = {
@@ -247,6 +273,7 @@ def main():
         "mcfarland_2020": download_and_preprocess_mcfarland_2020,
         "grubman_2019": download_and_preprocess_grubman_2019,
         "norman_2019": download_and_preprocess_norman_2019,
+        "cain_2020": download_and_preprocess_cain_2020,
     }
     parser = argparse.ArgumentParser(description="Preprocess data.")
     parser.add_argument(

@@ -9,6 +9,7 @@ DATASET_LIST = [
     "mcfarland_2020",
     "grubman_2019",
     "norman_2019",
+    "cain_2020",
 ]
 DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
 DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
