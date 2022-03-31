@@ -10,6 +10,7 @@ DATASET_LIST = [
     "grubman_2019",
     "norman_2019",
     "cain_2020",
+    "mcginnis_2019",
 ]
 DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
 DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
@@ -45,4 +46,9 @@ DATASET_SPLIT_LOOKUP = {
         "label_key": "gene_program",
     },
     "grubman_2019": {"split_key": "batchCond", "background_value": "ct"},
+    "mcginnis_2019": {
+        "split_key": "TumorStage",
+        "background_value": "WT",  # WT (= Wild type) means no cancer here
+        "label_key": "TumorStage",
+    },
 }
