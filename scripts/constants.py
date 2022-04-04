@@ -11,6 +11,7 @@ DATASET_LIST = [
     "norman_2019",
     "cain_2020",
     "mcginnis_2019",
+    "srivatsan_2019",
 ]
 DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
 DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
@@ -50,5 +51,10 @@ DATASET_SPLIT_LOOKUP = {
         "split_key": "TumorStage",
         "background_value": "WT",  # WT (= Wild type) means no cancer here
         "label_key": "TumorStage",
+    },
+    "srivatsan_2019": {
+        "split_key": "drug",
+        "background_value": "Vehicle",
+        "label_key": "drug",
     },
 }
