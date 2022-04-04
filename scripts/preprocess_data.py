@@ -37,6 +37,10 @@ from contrastive_vi.data.datasets.norman_2019 import (
     download_norman_2019,
     preprocess_norman_2019,
 )
+from contrastive_vi.data.datasets.srivatsan_2019 import (
+    download_srivatsan_2019,
+    preprocess_srivatsan_2019,
+)
 from contrastive_vi.data.datasets.xiang_2020 import (
     download_xiang_2020,
     preprocess_xiang_2020,
@@ -288,6 +292,28 @@ def download_and_preprocess_mcginnis_2019(
     save_preprocessed_adata(adata, output_path, normalization_method)
 
 
+def download_and_preprocess_srivatsan_2019(
+    output_path: str, n_top_genes: int, normalization_method: str
+) -> None:
+    """
+    Download, preprocess, and save data from Srivatsan et al., 2019.
+
+    Args:
+    ----
+        output_path: Path to save output files.
+        n_top_genes: Number of most variable genes to retain.
+        normalization_method: Name of normalization method.
+
+    Returns
+    -------
+        None. Raw Data are saved in output_path. Preprocessed data are saved
+        in a sub-directory called "preprocessed" in output_path.
+    """
+    download_srivatsan_2019(output_path)
+    adata = preprocess_srivatsan_2019(output_path, n_top_genes, normalization_method)
+    save_preprocessed_adata(adata, output_path, normalization_method)
+
+
 def main():
     """Run main function."""
     preprocess_function_dict = {
@@ -301,6 +327,7 @@ def main():
         "norman_2019": download_and_preprocess_norman_2019,
         "cain_2020": download_and_preprocess_cain_2020,
         "mcginnis_2019": download_and_preprocess_mcginnis_2019,
+        "srivatsan_2019": download_and_preprocess_srivatsan_2019,
     }
     parser = argparse.ArgumentParser(description="Preprocess data.")
     parser.add_argument(
