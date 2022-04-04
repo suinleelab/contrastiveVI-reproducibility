@@ -47,6 +47,11 @@ DATASET_SPLIT_LOOKUP = {
         "label_key": "gene_program",
     },
     "grubman_2019": {"split_key": "batchCond", "background_value": "ct"},
+    "cain_2020": {
+        "split_key": "combined_diagnosis",
+        "background_value": "None",
+        "label_key": "combined_diagnosis",
+    },
     "mcginnis_2019": {
         "split_key": "TumorStage",
         "background_value": "WT",  # WT (= Wild type) means no cancer here

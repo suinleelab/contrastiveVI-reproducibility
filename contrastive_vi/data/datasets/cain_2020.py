@@ -129,6 +129,34 @@ def preprocess_cain_2020(
     # Filtering as described in the methods section of Cain et al. 2020
     adata = adata[adata.obs["broad_class"] != "None"]
 
+    # Specimen IDs have the format MFC-B#-S#-Cdx#-pAD# or MFC-B#-#-Cog#-Path#
+    # The number after pAD or Path indicates pathological AD diagnosis
+    # (0 = no diagnosis, 1 = diagnosed with AD). The number after Cdx or Cog
+    # indicates cognitive AD diagnosis (1 = no diagnosis, 4 = diagnosed with AD)
+    pathology_labels = [x.split("-")[-1][-1] for x in adata.obs["specimenID"]]
+    cognitive_labels = [x.split("-")[-2][-1] for x in adata.obs["specimenID"]]
+
+    adata.obs["pathology"] = [
+        "AD" if label == "1" else "Ctrl" for label in pathology_labels
+    ]
+    adata.obs["cognitive"] = [
+        "AD" if label == "4" else "Ctrl" for label in cognitive_labels
+    ]
+
+    # Combine both types of diagnoses into a single label
+    combined_diagnosis_labels = []
+    for pathology, cognitive in zip(adata.obs["pathology"], adata.obs["cognitive"]):
+        if pathology == "AD" and cognitive == "AD":
+            diagnosis = "Both"
+        elif pathology == "AD":
+            diagnosis = "Pathological"
+        elif cognitive == "AD":
+            diagnosis = "Cognitive"
+        else:
+            diagnosis = "None"
+        combined_diagnosis_labels.append(diagnosis)
+    adata.obs["combined_diagnosis"] = combined_diagnosis_labels
+
     adata = preprocess_workflow(
         adata=adata, n_top_genes=n_top_genes, normalization_method=normalization_method
     )
