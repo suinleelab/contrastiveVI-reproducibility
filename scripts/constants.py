@@ -10,6 +10,7 @@ DATASET_LIST = [
     "grubman_2019",
     "norman_2019",
     "cain_2020",
+    "cain_2020_excluding_cog_only",
     "mcginnis_2019",
     "srivatsan_2019",
 ]
@@ -48,6 +49,11 @@ DATASET_SPLIT_LOOKUP = {
     },
     "grubman_2019": {"split_key": "batchCond", "background_value": "ct"},
     "cain_2020": {
+        "split_key": "combined_diagnosis",
+        "background_value": "None",
+        "label_key": "combined_diagnosis",
+    },
+    "cain_2020_excluding_cog_only": {
         "split_key": "combined_diagnosis",
         "background_value": "None",
         "label_key": "combined_diagnosis",
