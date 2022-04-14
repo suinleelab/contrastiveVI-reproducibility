@@ -45,6 +45,19 @@ def download_mcfarland_2020(output_path: str) -> None:
     dmso_output_dir = dmso_output_filename.replace(".zip", "")
     shutil.unpack_archive(dmso_output_filename, dmso_output_dir)
 
+    # DepMap 19Q3 mutation data; this was used by McFarland et al. to determine
+    # mutation statuses for different genes for each cell line
+    cell_line_mutations_url = "https://ndownloader.figshare.com/files/16757702"
+    cell_line_mutations_output_filename = os.path.join(output_path, "mutations.csv")
+    download_binary_file(cell_line_mutations_url, cell_line_mutations_output_filename)
+
+    # Metadata file that contains mappings from DepMap cell line IDs (used in
+    # the mutation file above) to the human-readable cell line names used
+    # by McFarland et al.
+    cell_line_info_url = "https://ndownloader.figshare.com/files/16757723"
+    cell_line_info_output_filename = os.path.join(output_path, "cell_line_info.csv")
+    download_binary_file(cell_line_info_url, cell_line_info_output_filename)
+
 
 def _read_mixseq_df(directory: str) -> pd.DataFrame:
     data = mmread(os.path.join(directory, "matrix.mtx"))
@@ -68,22 +81,34 @@ def _get_cell_line_labels(directory: str) -> np.array:
     return classifications.singlet_ID.values
 
 
-def _get_tp53_mutation_status(cell_line_labels: List[str]) -> np.array:
-    # Taken from https://cancerdatascience.org/blog/posts/mix-seq/
-    TP53_WT = [
-        "LNCAPCLONEFGC_PROSTATE",
-        "DKMG_CENTRAL_NERVOUS_SYSTEM",
-        "NCIH226_LUNG",
-        "RCC10RGB_KIDNEY",
-        "SNU1079_BILIARY_TRACT",
-        "CCFSTTG1_CENTRAL_NERVOUS_SYSTEM",
-        "COV434_OVARY",
+def _get_mutation_status(
+    mutations_file_directory: str, gene: str, cell_line_labels: List[str]
+):
+    mutations = pd.read_csv(os.path.join(mutations_file_directory, "mutations.csv"))
+    cell_line_info = pd.read_csv(
+        os.path.join(mutations_file_directory, "cell_line_info.csv")
+    )
+
+    # Construct a mapping between the DepMap ID's used in the mutations file
+    # and the human readable cell line names in the cell line info file
+    cell_line_map = {}
+    for idx, row in cell_line_info.iterrows():
+        cell_line_map[row["DepMap_ID"]] = row["CCLE Name"]
+
+    mutations["cell_line"] = [cell_line_map[x] for x in mutations["DepMap_ID"]]
+
+    # The McFarland authors considered silent mutations to
+    # be equivalent to wild type, so we do the same here
+    gene_mutations = mutations[
+        (mutations["Hugo_Symbol"] == gene)
+        & (mutations["Variant_Classification"] != "Silent")
     ]
 
-    TP53_mutation_status = [
-        "Wild Type" if x in TP53_WT else "Mutation" for x in cell_line_labels
+    gene_mutations_cell_lines = gene_mutations["cell_line"].unique()
+    return [
+        "Mutation" if x in gene_mutations_cell_lines else "Wild Type"
+        for x in cell_line_labels
     ]
-    return np.array(TP53_mutation_status)
 
 
 def read_mcfarland_2020(file_directory: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -143,8 +168,10 @@ def preprocess_mcfarland_2020(
         download_path, "idasanutlin", "Idasanutlin_24hr_expt1"
     )
     idasanutlin_adata.obs["cell_line"] = _get_cell_line_labels(idasanutlin_dir)
-    idasanutlin_adata.obs["TP53_mutation_status"] = _get_tp53_mutation_status(
-        idasanutlin_adata.obs["cell_line"]
+    idasanutlin_adata.obs["TP53_mutation_status"] = _get_mutation_status(
+        mutations_file_directory=download_path,
+        gene="TP53",
+        cell_line_labels=idasanutlin_adata.obs["cell_line"],
     )
     idasanutlin_adata.obs["condition"] = np.repeat(
         "Idasanutlin", idasanutlin_adata.shape[0]
@@ -153,8 +180,10 @@ def preprocess_mcfarland_2020(
     dmso_adata = AnnData(dmso_df)
     dmso_dir = os.path.join(download_path, "dmso", "DMSO_24hr_expt1")
     dmso_adata.obs["cell_line"] = _get_cell_line_labels(dmso_dir)
-    dmso_adata.obs["TP53_mutation_status"] = _get_tp53_mutation_status(
-        dmso_adata.obs["cell_line"]
+    dmso_adata.obs["TP53_mutation_status"] = _get_mutation_status(
+        mutations_file_directory=download_path,
+        gene="TP53",
+        cell_line_labels=dmso_adata.obs["cell_line"],
     )
     dmso_adata.obs["condition"] = np.repeat("DMSO", dmso_adata.shape[0])
 
