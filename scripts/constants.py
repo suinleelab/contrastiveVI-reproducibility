@@ -13,6 +13,7 @@ DATASET_LIST = [
     "cain_2020_excluding_cog_only",
     "mcginnis_2019",
     "srivatsan_2019",
+    "papalexi_2021",
 ]
 DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
 DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
@@ -67,5 +68,9 @@ DATASET_SPLIT_LOOKUP = {
         "split_key": "drug",
         "background_value": "Vehicle",
         "label_key": "drug",
+    },
+    "papalexi_2021": {
+        "split_key": "crispr",
+        "background_value": "NT",
     },
 }
