@@ -13,7 +13,7 @@ from contrastive import CPCA
 from cplvm import CGLVM, CPLVM, CGLVMMFGaussianApprox, CPLVMLogNormalApprox
 from pcpca import PCPCA
 from scvi._settings import settings
-from scvi.model import SCVI
+from scvi.model import SCVI, TOTALVI
 from sklearn.preprocessing import StandardScaler
 
 from contrastive_vi.model.contrastive_vi import ContrastiveVIModel
@@ -40,6 +40,7 @@ parser.add_argument(
         "CPLVM",
         "CGLVM",
         "cVAE",
+        "totalVI",
     ],
     help="Which model to train",
 )
@@ -92,6 +93,17 @@ print(f"Running {sys.argv[0]} with arguments")
 for arg in vars(args):
     print(f"\t{arg}={getattr(args, arg)}")
 
+# totalVI can only be used with the papalexi_2021 joint RNA + protein dataset.
+# Similarly, RNA-only methods cannot be applied to the papalexi_2021 dataset.
+if args.method == "totalVI":
+    assert (
+        args.dataset == "papalexi_2021"
+    ), "totalVI can only be applied to papalexi_2021"
+else:
+    assert (
+        args.dataset != "papalexi_2021"
+    ), "RNA-only models cannot be applied to papalexi_2021"
+
 if args.method in constants.METHODS_WITHOUT_LIB_NORMALIZATION:
     preprocessed_file_suffix = f"_{args.normalization_method}"
     output_suffix = preprocessed_file_suffix
@@ -124,6 +136,7 @@ torch_models = [
     "contrastiveVI",
     "TC_contrastiveVI",
     "mmd_contrastiveVI",
+    "totalVI",
 ]
 tf_models = ["CPLVM", "CGLVM"]
 normalized_expressions = None
@@ -273,9 +286,27 @@ if args.method in torch_models:
                 max_epochs=500,
             )
             target_adata = adata[adata.obs[split_key] != background_value].copy()
-            latent_representations = model.get_latent_representation(
-                adata=target_adata
+            latent_representations = model.get_latent_representation(adata=target_adata)
+
+        elif args.method == "totalVI":
+            # We only train totalVI with target samples
+            target_adata = adata[adata.obs[split_key] != background_value].copy()
+            TOTALVI.setup_anndata(
+                target_adata,
+                protein_expression_obsm_key=constants.PROTEIN_EXPRESSION_KEY,
+                layer="count",
             )
+            model = TOTALVI(
+                target_adata, n_latent=args.latent_size, use_observed_lib_size=False
+            )
+            model.train(
+                check_val_every_n_epoch=1,
+                train_size=0.8,
+                use_gpu=use_gpu,
+                early_stopping=True,
+                max_epochs=500,
+            )
+            latent_representations = model.get_latent_representation(adata=target_adata)
 
         elif args.method == "cVAE":
             CVAEModel.setup_anndata(adata)

@@ -8,6 +8,7 @@ of inhibitory immune checkpoints with multimodal single-cell screens. (Nature Ge
 import os
 import shutil
 
+import constants
 import pandas as pd
 from anndata import AnnData
 
@@ -118,7 +119,7 @@ def preprocess_papalexi_2021(
     # (see https://docs.scvi-tools.org/en/stable/tutorials/notebooks/totalVI.html
     # for an example). Since `protein_counts_df` is annotated with protein names,
     # our obsm field will retain them as well.
-    adata.obsm["protein_expression"] = protein_counts_df
+    adata.obsm[constants.PROTEIN_EXPRESSION_KEY] = protein_counts_df
 
     adata = preprocess_workflow(
         adata=adata, n_top_genes=n_top_genes, normalization_method=normalization_method
