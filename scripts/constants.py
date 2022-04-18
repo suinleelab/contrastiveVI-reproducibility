@@ -19,6 +19,8 @@ DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
 DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
 DEFAULT_SEEDS = [123, 42, 789, 46, 999]
 
+PROTEIN_EXPRESSION_KEY = "protein_expression"
+
 NORMALIZATION_LIST = ["tc", "tmm", "scran", "basics"]
 METHODS_WITHOUT_LIB_NORMALIZATION = ["PCPCA", "cPCA", "cVAE"]
 
