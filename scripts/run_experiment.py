@@ -16,6 +16,7 @@ from scvi._settings import settings
 from scvi.model import SCVI, TOTALVI
 from sklearn.preprocessing import StandardScaler
 
+from contrastive_vi.baselines.mixscape import run_mixscape
 from contrastive_vi.model.contrastive_vi import ContrastiveVIModel
 from contrastive_vi.model.cvae import CVAEModel
 from contrastive_vi.model.total_contrastive_vi import TotalContrastiveVIModel
@@ -46,6 +47,7 @@ parser.add_argument(
         "cVAE",
         "totalVI",
         "total_contrastiveVI",
+        "mixscape",
     ],
     help="Which model to train",
 )
@@ -99,13 +101,15 @@ for arg in vars(args):
     print(f"\t{arg}={getattr(args, arg)}")
 
 # totalVI and variants can only be used with the papalexi_2021 joint RNA + protein
-# dataset. Similarly, RNA-only methods cannot be applied to the papalexi_2021 dataset.
+# dataset. We use mixscape as a baseline for papalexi_2021 (as it was
+# developed by the Papalexi authors), but we disallow other RNA-only methods from
+# being applied to this dataset.
 rna_protein_methods = ["totalVI", "total_contrastiveVI"]
 if args.method in rna_protein_methods:
     assert (
         args.dataset == "papalexi_2021"
     ), f"{args.method} can only be applied to papalexi_2021!"
-else:
+elif args.method != "mixscape":
     assert (
         args.dataset != "papalexi_2021"
     ), "RNA-only models cannot be applied to papalexi_2021!"
@@ -561,5 +565,48 @@ elif args.method == "cPCA":
         arr=latent_representations,
         file=os.path.join(results_dir, "latent_representations.npy"),
     )
+
+elif args.method == "mixscape":
+
+    # Since mixscape relies on a (non-deterministic) approximate nearest neighbors
+    # algorithm, we run it for multiple seeds
+    for seed in args.random_seeds:
+        settings.seed = seed
+
+        # Using the `split_by` argument results in mixscape being run
+        # separately for each replicate with the results aggregated at the end.
+        # Here I used the argument for Papalexi to match the authors' workflow
+        # in https://satijalab.org/seurat/articles/mixscape_vignette.html (see
+        # the call to `CalcPerturbSig`).
+        run_mixscape(
+            adata=adata,
+            pert_key=split_key,
+            control=background_value,
+            n_pcs=15,  # Default value in Seurat implementation
+            split_by="replicate" if args.dataset == "papalexi_2021" else None,
+        )
+
+        adata_pert = adata.copy()
+        adata_pert.X = adata_pert.layers["X_pert"]
+        adata_pert = adata_pert[adata_pert.obs[split_key] != background_value]
+
+        # Since the mixscape authors recommend running PCA on the mixscape values,
+        # we do so here and treat the result as a latent embedding
+        sc.pp.pca(adata_pert, n_comps=args.latent_size)
+        latent_representations = adata_pert.obsm["X_pca"]
+
+        results_dir = os.path.join(
+            constants.DEFAULT_RESULTS_PATH,
+            args.dataset,
+            f"{args.method}{output_suffix}",
+            f"latent_{args.latent_size}",
+            str(seed),
+        )
+
+        os.makedirs(results_dir, exist_ok=True)
+        np.save(
+            arr=latent_representations,
+            file=os.path.join(results_dir, "latent_representations.npy"),
+        )
 
 print("Done!")
