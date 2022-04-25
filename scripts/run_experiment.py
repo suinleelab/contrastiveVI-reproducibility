@@ -18,6 +18,10 @@ from sklearn.preprocessing import StandardScaler
 
 from contrastive_vi.model.contrastive_vi import ContrastiveVIModel
 from contrastive_vi.model.cvae import CVAEModel
+from contrastive_vi.model.total_contrastive_vi import TotalContrastiveVIModel
+
+settings.num_threads = 1
+settings.dl_num_workers = 1
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -41,6 +45,7 @@ parser.add_argument(
         "CGLVM",
         "cVAE",
         "totalVI",
+        "total_contrastiveVI",
     ],
     help="Which model to train",
 )
@@ -93,16 +98,17 @@ print(f"Running {sys.argv[0]} with arguments")
 for arg in vars(args):
     print(f"\t{arg}={getattr(args, arg)}")
 
-# totalVI can only be used with the papalexi_2021 joint RNA + protein dataset.
-# Similarly, RNA-only methods cannot be applied to the papalexi_2021 dataset.
-if args.method == "totalVI":
+# totalVI and variants can only be used with the papalexi_2021 joint RNA + protein
+# dataset. Similarly, RNA-only methods cannot be applied to the papalexi_2021 dataset.
+rna_protein_methods = ["totalVI", "total_contrastiveVI"]
+if args.method in rna_protein_methods:
     assert (
         args.dataset == "papalexi_2021"
-    ), "totalVI can only be applied to papalexi_2021"
+    ), f"{args.method} can only be applied to papalexi_2021!"
 else:
     assert (
         args.dataset != "papalexi_2021"
-    ), "RNA-only models cannot be applied to papalexi_2021"
+    ), "RNA-only models cannot be applied to papalexi_2021!"
 
 if args.method in constants.METHODS_WITHOUT_LIB_NORMALIZATION:
     preprocessed_file_suffix = f"_{args.normalization_method}"
@@ -137,6 +143,7 @@ torch_models = [
     "TC_contrastiveVI",
     "mmd_contrastiveVI",
     "totalVI",
+    "total_contrastiveVI",
 ]
 tf_models = ["CPLVM", "CGLVM"]
 normalized_expressions = None
@@ -288,6 +295,37 @@ if args.method in torch_models:
             target_adata = adata[adata.obs[split_key] != background_value].copy()
             latent_representations = model.get_latent_representation(adata=target_adata)
 
+        elif args.method == "total_contrastiveVI":
+            TotalContrastiveVIModel.setup_anndata(
+                adata,
+                protein_expression_obsm_key=constants.PROTEIN_EXPRESSION_KEY,
+                layer="count",
+            )
+
+            model = TotalContrastiveVIModel(
+                adata,
+                n_hidden=128,
+                n_background_latent=10,
+                n_salient_latent=args.latent_size,
+                n_layers=1,
+                dropout_rate=0.1,
+                protein_batch_mask=None,
+                use_observed_lib_size=False,
+            )
+            background_indices = np.where(adata.obs[split_key] == background_value)[0]
+            target_indices = np.where(adata.obs[split_key] != background_value)[0]
+            model.train(
+                check_val_every_n_epoch=1,
+                train_size=0.8,
+                background_indices=background_indices,
+                target_indices=target_indices,
+                use_gpu=use_gpu,
+                early_stopping=True,
+                max_epochs=500,
+            )
+            target_adata = adata[adata.obs[split_key] != background_value].copy()
+            latent_representations = model.get_latent_representation(adata=target_adata)
+
         elif args.method == "totalVI":
             # We only train totalVI with target samples
             target_adata = adata[adata.obs[split_key] != background_value].copy()
@@ -297,7 +335,15 @@ if args.method in torch_models:
                 layer="count",
             )
             model = TOTALVI(
-                target_adata, n_latent=args.latent_size, use_observed_lib_size=False
+                target_adata,
+                n_hidden=128,
+                n_layers_encoder=1,
+                n_layers_decoder=1,
+                dropout_rate_decoder=0.1,
+                dropout_rate_encoder=0.1,
+                n_latent=args.latent_size,
+                protein_batch_mask=None,
+                use_observed_lib_size=False,
             )
             model.train(
                 check_val_every_n_epoch=1,
