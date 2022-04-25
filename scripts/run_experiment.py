@@ -195,6 +195,11 @@ if args.method in torch_models:
             latent_representations = model.get_latent_representation(
                 adata=target_adata, representation_kind="salient"
             )
+            background_adata = adata[adata.obs[split_key] == background_value].copy()
+            background_latent_representations = model.get_latent_representation(
+                adata=background_adata,
+                representation_kind="background",
+            )
             normalized_expressions = model.get_normalized_expression(
                 adata=adata, n_samples=100
             )
@@ -227,6 +232,11 @@ if args.method in torch_models:
             target_adata = adata[adata.obs[split_key] != background_value].copy()
             latent_representations = model.get_latent_representation(
                 adata=target_adata, representation_kind="salient"
+            )
+            background_adata = adata[adata.obs[split_key] == background_value].copy()
+            background_latent_representations = model.get_latent_representation(
+                adata=background_adata,
+                representation_kind="background",
             )
             normalized_expressions = model.get_normalized_expression(
                 adata=adata, n_samples=100
@@ -264,6 +274,11 @@ if args.method in torch_models:
             latent_representations = model.get_latent_representation(
                 adata=target_adata, representation_kind="salient"
             )
+            background_adata = adata[adata.obs[split_key] == background_value].copy()
+            background_latent_representations = model.get_latent_representation(
+                adata=background_adata,
+                representation_kind="background",
+            )
             normalized_expressions = model.get_normalized_expression(
                 adata=adata, n_samples=100
             )
@@ -283,6 +298,7 @@ if args.method in torch_models:
                 max_epochs=500,
             )
             latent_representations = model.get_latent_representation(adata=target_adata)
+            background_latent_representations = None
 
         elif args.method == "scVI_with_background":
             # Train scVI with both target and background samples to test target vs.
@@ -298,6 +314,7 @@ if args.method in torch_models:
             )
             target_adata = adata[adata.obs[split_key] != background_value].copy()
             latent_representations = model.get_latent_representation(adata=target_adata)
+            background_latent_representations = None
 
         elif args.method == "total_contrastiveVI":
             TotalContrastiveVIModel.setup_anndata(
@@ -328,7 +345,15 @@ if args.method in torch_models:
                 max_epochs=500,
             )
             target_adata = adata[adata.obs[split_key] != background_value].copy()
-            latent_representations = model.get_latent_representation(adata=target_adata)
+            latent_representations = model.get_latent_representation(
+                adata=target_adata,
+                representation_kind="salient",
+            )
+            background_adata = adata[adata.obs[split_key] == background_value].copy()
+            background_latent_representations = model.get_latent_representation(
+                adata=background_adata,
+                representation_kind="background",
+            )
 
         elif args.method == "totalVI":
             # We only train totalVI with target samples
@@ -357,6 +382,7 @@ if args.method in torch_models:
                 max_epochs=500,
             )
             latent_representations = model.get_latent_representation(adata=target_adata)
+            background_latent_representations = None
 
         elif args.method == "cVAE":
             CVAEModel.setup_anndata(adata)
@@ -384,6 +410,11 @@ if args.method in torch_models:
             latent_representations = model.get_latent_representation(
                 adata=target_adata, representation_kind="salient"
             )
+            background_adata = adata[adata.obs[split_key] == background_value].copy()
+            background_latent_representations = model.get_latent_representation(
+                adata=background_adata,
+                representation_kind="background",
+            )
 
         results_dir = os.path.join(
             constants.DEFAULT_RESULTS_PATH,
@@ -400,6 +431,11 @@ if args.method in torch_models:
             arr=latent_representations,
             file=os.path.join(results_dir, "latent_representations.npy"),
         )
+        if background_latent_representations is not None:
+            np.save(
+                arr=background_latent_representations,
+                file=os.path.join(results_dir, "background_latent_representations.npy"),
+            )
         if normalized_expressions is not None:
             background_normalized_expression = normalized_expressions["background"]
             salient_normalized_expression = normalized_expressions["salient"]
@@ -486,6 +522,7 @@ elif args.method in tf_models:
                 .transpose(),  # Background
             }
             latent_representations = model_output["qty_mean"]
+            background_latent_representations = model_output["qzy_mean"]
 
             results_dir = os.path.join(
                 constants.DEFAULT_RESULTS_PATH,
@@ -502,6 +539,10 @@ elif args.method in tf_models:
             np.save(
                 arr=latent_representations,
                 file=os.path.join(results_dir, "latent_representations.npy"),
+            )
+            np.save(
+                arr=background_latent_representations,
+                file=os.path.join(results_dir, "background_latent_representations.npy"),
             )
 
 elif args.method == "PCPCA":
