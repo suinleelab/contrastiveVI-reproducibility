@@ -16,3 +16,4 @@ dependencies:
     - cplvm==0.3
     - gseapy
     - diffxpy
+    - pynndescent
