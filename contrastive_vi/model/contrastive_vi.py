@@ -341,23 +341,27 @@ class ContrastiveVIModel(ContrastiveTrainingMixin, BaseModelClass):
         salient_exprs = []
         for tensors in data_loader:
             x = tensors[_CONSTANTS.X_KEY]
-            batch_index = tensors[_CONSTANTS.BATCH_KEY]
+            batch_original = tensors[_CONSTANTS.BATCH_KEY]
             background_per_batch_exprs = []
             salient_per_batch_exprs = []
             for batch in transform_batch:
-                if batch is not None:
-                    batch_index = torch.ones_like(batch_index) * batch
                 inference_outputs = self.module._generic_inference(
-                    x=x, batch_index=batch_index, n_samples=n_samples
+                    x=x, batch_index=batch_original, n_samples=n_samples
                 )
                 z = inference_outputs["z"]
                 s = inference_outputs["s"]
                 library = inference_outputs["library"]
+
+                if batch is not None:
+                    batch_new = torch.ones_like(batch_original) * batch
+                else:
+                    batch_new = batch_original
+
                 background_generative_outputs = self.module._generic_generative(
-                    z=z, s=torch.zeros_like(s), library=library, batch_index=batch_index
+                    z=z, s=torch.zeros_like(s), library=library, batch_index=batch_new
                 )
                 salient_generative_outputs = self.module._generic_generative(
-                    z=z, s=s, library=library, batch_index=batch_index
+                    z=z, s=s, library=library, batch_index=batch_new
                 )
                 background_outputs = self._preprocess_normalized_expression(
                     background_generative_outputs,
