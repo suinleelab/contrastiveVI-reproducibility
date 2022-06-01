@@ -1,25 +1,17 @@
-# contrastiveVI
+# contrastiveVI reproducibility repository
 
 <center>
     <img src="./sketch.png?raw=true" width="750">
 </center>
+
+This repository contains code for reproducing results in the contrastiveVI [paper](#references).
 
 contrastiveVI is a generative model designed to isolate factors of variation specific to
 a group of "target" cells (e.g. from specimens with a given disease) from those shared
 with a group of "background" cells (e.g. from healthy specimens). contrastiveVI is
 implemented in [scvi-tools](https://scvi-tools.org/).
 
-## User guide
-
-### Installation
-
-To install the latest version of contrastiveVI via pip
-
-```
-pip install contrastive-vi
-```
-
-### What you can do with contrastiveVI
+## What you can do with contrastiveVI
 
 * If you have a dataset with cells in a background condition (e.g. from healthy
 controls) and a target condition (e.g. from diseased patients), you can train
@@ -31,21 +23,7 @@ of target cells
 using a procedure similar to that of [scVI
 ](https://www.nature.com/articles/s41592-018-0229-2).
 
-### Colab Notebook Examples
-
-* [Applying contrastiveVI to see the effects of stem cell transplants for leukemia patients
-](https://colab.research.google.com/drive/1yOTCVNWY6BydS1bppOYCWHvrxuvhMxZV?usp=sharing)
-* [Applying contrastiveVI to separate mouse intestinal epithelial cells
-infected with different pathogens by pathogen type
-](https://colab.research.google.com/drive/1z0AcKQg7juArXGCx1XKj6skojWKRlDMC?usp=sharing)
-* [Applying contrastiveVI to better understand the results of a MIX-Seq
-small-molecule drug perturbation experiment
-](https://colab.research.google.com/drive/1cMaJpMe3g0awCiwsw13oG7RvGnmXNCac?usp=sharing)
-* [Applying contrastiveVI to better understand heterogeneity in cellular responses to Alzheimer's disease
-](https://colab.research.google.com/drive/1_R1YWQQUJzgQ6kz1XqglL5xZn8b8h1TX?usp=sharing)
-
-
-## Development guide
+## Reproducibility guide
 
 ### Set up the environment
 1. Git clone this repository.
@@ -55,17 +33,42 @@ small-molecule drug perturbation experiment
     conda env create -f environment.yml
     conda activate contrastive-vi-env
     ```
-4. Install the `constrative_vi` package and necessary dependencies for
-development by running `pip install -e ".[dev]"`.
-5. Git pre-commit hooks (https://pre-commit.com/) are used to automatically
-check and fix formatting errors before a Git commit happens. Run
-`pre-commit install` to install all the hooks.
-6. Test that the pre-commit hooks work by running `pre-commit run --all-files`.
+4. Install the local `constrative_vi` package and necessary dependencies by running `pip install -e ".[dev]"`.
 
-### Testing
-It's a good practice to include unit tests during development.
-Run `pytest tests` to verify existing tests.
+### Modify data and result path
+Modify the paths for storing data and model results in `scripts/constants.py`.
+* Modify `DEFAULT_DATA_PATH` for the data storage path.
+* Modify `DEFAULT_RESULTS_PATH` for the model result storage path.
 
+### Download datasets
+
+Run `scripts/preprocess_data.py` to download and preprocess the single-cell datasets.
+For example, to download the data from
+[Zheng _et al._ 2017](https://www.nature.com/articles/ncomms14049)
+```
+python scripts/preprocess_data.py zheng_2017
+```
+
+### Run experiments
+Run `scripts/run_experiment.py` to train models and store model outputs. For example,
+to train contrastiveVI models with the data from Zheng _et al._ 2017,
+```
+python scripts/run_experiment.py zheng_2017 contrastiveVI
+```
+
+### Evaluate model performance
+Once the experiments for the baselines (CPLVM, CGLVM, and scVI) and contrastiveVI have
+all been completed. Run
+```
+python scripts/evaluate_performance.py
+```
+to generate `performance_summary.csv` in the result directory.
+
+Note: In `scripts/evaluate_performance.py`, the variable `datasets` can be modified for
+evaluating model performance with particular datasets of interest.
+
+### Plot results
+Figures can be plotted using the corresponding notebooks in `notebooks/figures`.
 
 ## References
 
