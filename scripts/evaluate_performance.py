@@ -10,7 +10,7 @@ from eval_utils import evaluate_latent_representations, nan_metrics
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 
-datasets = ["mcfarland_2020", "zheng_2017", "haber_2017", "norman_2019"]
+datasets = ["zheng_2017"]  # Modify for datasets of interest.
 latent_sizes = [2, 10, 32, 64]
 dataset_split_lookup = constants.DATASET_SPLIT_LOOKUP
 
