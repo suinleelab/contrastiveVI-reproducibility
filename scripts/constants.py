@@ -15,8 +15,8 @@ DATASET_LIST = [
     "srivatsan_2019",
     "papalexi_2021",
 ]
-DEFAULT_DATA_PATH = "/projects/leelab/data/single-cell"
-DEFAULT_RESULTS_PATH = "/projects/leelab/contrastiveVI/results-different-normalization/"
+DEFAULT_DATA_PATH = "./data"  # Modify to preferred data storage path.
+DEFAULT_RESULTS_PATH = "./results"  # Modify to preferred result storage path.
 DEFAULT_SEEDS = [123, 42, 789, 46, 999]
 
 PROTEIN_EXPRESSION_KEY = "protein_expression"

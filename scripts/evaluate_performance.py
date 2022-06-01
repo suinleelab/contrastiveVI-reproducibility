@@ -55,13 +55,7 @@ for dataset in datasets:
             for method_seed in method_seeds:
                 for normalization_suffix in normalization_suffixes:
                     full_method = f"{method}{normalization_suffix}"
-                    if dataset == "zheng_2017":
-                        results_path = os.path.join(
-                            "/projects/leelab/contrastiveVI",
-                            "results-fixed-background-size",
-                        )
-                    else:
-                        results_path = constants.DEFAULT_RESULTS_PATH
+                    results_path = constants.DEFAULT_RESULTS_PATH
                     if dataset == "norman_2019":
                         cluster_algorithm = "gmm"
                     else:
