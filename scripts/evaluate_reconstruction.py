@@ -104,14 +104,7 @@ for dataset in datasets:
             for latent_size in latent_sizes:
                 for seed in constants.DEFAULT_SEEDS:
                     full_method = f"{method}{normalization_suffix}"
-                    if dataset == "zheng_2017" and full_method == "contrastiveVI":
-                        # Use models trained on previous preprocessed data.
-                        results_path = os.path.join(
-                            "/projects/leelab/contrastiveVI",
-                            "results-fixed-background-size",
-                        )
-                    else:
-                        results_path = constants.DEFAULT_RESULTS_PATH
+                    results_path = constants.DEFAULT_RESULTS_PATH
                     output_dir = os.path.join(
                         results_path,
                         dataset,

@@ -383,7 +383,7 @@ def main():
     parser.add_argument(
         "--output-path",
         type=str,
-        default="/projects/leelab/data/single-cell",
+        default="./data",
         dest="output_path",
         help="Path for storing a directory for the preprocessed dataset",
     )
