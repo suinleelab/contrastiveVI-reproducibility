@@ -11,6 +11,9 @@ a group of "target" cells (e.g. from specimens with a given disease) from those 
 with a group of "background" cells (e.g. from healthy specimens). contrastiveVI is
 implemented in [scvi-tools](https://scvi-tools.org/).
 
+A standalone contrastiveVI package, along with Google Colab notebooks demonstrating its use on various
+scRNA-seq datasets, can be found at https://github.com/suinleelab/contrastiveVI.
+
 ## What you can do with contrastiveVI
 
 * If you have a dataset with cells in a background condition (e.g. from healthy
