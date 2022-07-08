@@ -23,9 +23,14 @@ of target cells
 using a procedure similar to that of [scVI
 ](https://www.nature.com/articles/s41592-018-0229-2).
 
+## System requirements
+This software was designed and tested on a machine running CentOS 7.8.2003, with Python 3.9, PyTorch 1.11, and CUDA 11.2. For a full list of all external Python package dependences used in this project, see the Conda environment file `environment.yml` and the package setup file `setup.cfg`.
+
+When available, this software leverages graphical processing units (GPUs) to accelerate neural network training and evaluation. Systems lacking suitable GPUs may take an extremely long time to train/evaluate models. Our experiments were conducted using an NVIDIA RTX 2080 TI GPU; other GPUs should also work as long as they have sufficient memory (~2GB).
+
 ## Reproducibility guide
 
-### Set up the environment
+### Installing the software
 1. Git clone this repository.
 2. `cd contrastive-vi`.
 3. Create and activate the specified conda environment by running
@@ -34,6 +39,8 @@ using a procedure similar to that of [scVI
     conda activate contrastive-vi-env
     ```
 4. Install the local `constrative_vi` package and necessary dependencies by running `pip install -e ".[dev]"`.
+
+This installation procedure should take no more than 30 minutes. Beyond downloading this repository, no addition time is required for its installation.
 
 ### Modify data and result path
 Modify the paths for storing data and model results in `scripts/constants.py`.
